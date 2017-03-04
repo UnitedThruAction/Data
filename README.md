@@ -12,9 +12,6 @@ Data and data-related tools for United Thru Action, the progressive action group
 * Raise requests or problems on the [Issues page](https://github.com/UnitedThruAction/Data/issues).
 * If you want to collaborate on code or data, clone our repo and send us a pull request.
 
-### Tools under active development
-* 
-
 ### There's something you should know!
 
 [Email us](mailto:united.thru.action.data@gmail.com).
