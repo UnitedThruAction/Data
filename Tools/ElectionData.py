@@ -166,7 +166,7 @@ if __name__ == "__main__":
         'Very Liberal']
     senate = pd.read_csv(
         '../Data/tabula-senate_nov16.csv',
-        header=None,
+        header=0,
         names=cols,
         dtype=coltypes,
         thousands=',')
@@ -177,7 +177,7 @@ if __name__ == "__main__":
         labels=district_class_labels)
     assembly = pd.read_csv(
         '../Data/tabula-assembly_nov16.csv',
-        header=None,
+        header=0,
         names=cols,
         dtype=coltypes,
         thousands=',')
@@ -188,7 +188,7 @@ if __name__ == "__main__":
         labels=district_class_labels)
     congress = pd.read_csv(
         '../Data/tabula-congress_nov16.csv',
-        header=None,
+        header=0,
         names=cols,
         dtype=coltypes,
         thousands=',')
