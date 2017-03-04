@@ -1,0 +1,13 @@
+{
+  "views": {
+    "by_year": {
+      "map": "function(doc) {emit(doc.year, doc)}"
+    },
+    "by_year_printNo": {
+      "map": "function(doc) {emit([doc.year, doc.printNo], doc)}"
+    },
+    "by_year_sponsor": {
+      "map": "function(doc) {emit([doc.year, doc.sponsor.member.fullName], doc)}"
+    }
+  }
+}
