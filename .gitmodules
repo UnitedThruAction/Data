@@ -1,6 +1,0 @@
-[submodule "County_Level_Election_Results_12-16"]
-	path = County_Level_Election_Results_12-16
-	url = https://github.com/tonmcg/County_Level_Election_Results_12-16
-[submodule "openelections-data-ny"]
-	path = openelections-data-ny
-	url = https://github.com/openelections/openelections-data-ny
