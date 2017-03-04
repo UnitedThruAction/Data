@@ -1,13 +1,11 @@
 """Collect information from the NY State Board of Elections website (http://www.elections.ny.gov/2016ElectionResults.html) and publish in a way more sensible format.
 
-Code is given for 2016 data below, but could easily be extended.  Note the NY State Board of Elections uses inconsistent names on their website, and data from 2014 and before is only published in PDF format, so an intermediary XLS must be produced first.  Use `df_from_raw_pdf(raw)` to process data from these intermediary XLS files, as the line spacing is slightly different.
+Code is given for 2016 and 2014 below, but could easily be extended.  Note the NY State Board of Elections uses inconsistent names on their website, and data from before 2014 is only published in PDF format, so an intermediary XLS must be produced first.  Use `df_from_raw_pdf(raw)` to process data from these intermediary XLS files, as the line spacing is slightly different.  Tabula (http://tabula.technology) can be used to manually extract tables from PDFs.
 
 Enrollment data is similar, in that it is only published in PDF format.  This script assumes you have used Tabula to extract this and it is is available in file `../Data/tabula-congress_nov16.csv`, `../Data/tabula-senate_nov16.csv` and `../Data/tabula-assembly_nov16.csv`.
 
-Tabula (http://tabula.technology) can be used to manually extract tables from PDFs.
-
-INPUT:  Elections data from web in non-sensible format, scraped PDFs.
-OUTPUT: ../Data/elections.xls, Excel sheet of elections data in sensible format.
+INPUT:  Elections data from web in non-sensible Excel format, enrollment data from scraped PDFs.
+OUTPUT: ../Data/NY State Senate Election Details.xls, Excel sheet of elections data in sensible summary format.
 
 """
 
@@ -100,7 +98,7 @@ def df_from_raw_pdf(raw):
     return df
 
 if __name__ == "__main__":
-    open("../Data/elections.csv", "a")
+    o = open("../Data/2014-2016-elections-raw.csv", "w")
     # 2016 election data.
     raw = pd.read_excel("http://www.elections.ny.gov/NYSBOE/elections/2016/General/2016Senate.xls")
     df = df_from_raw(raw)
@@ -113,6 +111,20 @@ if __name__ == "__main__":
     raw = pd.read_excel("http://www.elections.ny.gov/NYSBOE/elections/2016/General/2016Congress.xls")
     df = df_from_raw(raw)
     df['Year'] = "2016"
+    df.to_csv(o, header=False)
+    # 2014 election data.
+    raw = pd.read_excel("http://www.elections.ny.gov/NYSBOE/elections/2014/general/2014Senate.xlsx")
+    df = df_from_raw(raw)
+    df['Year'] = "2014"
+    df.head()
+    df.to_csv(o, header=False)
+    raw = pd.read_excel("http://www.elections.ny.gov/NYSBOE/elections/2014/General/2014Assembly.xlsx")
+    df = df_from_raw(raw)
+    df['Year'] = "2014"
+    df.to_csv(o, header=False)
+    raw = pd.read_excel("http://www.elections.ny.gov/NYSBOE/elections/2014/General/2014Congress.xlsx")
+    df = df_from_raw(raw)
+    df['Year'] = "2014"
     df.to_csv(o, header=False)
     o.close()
     # Enrollment data.
@@ -146,18 +158,18 @@ if __name__ == "__main__":
         'OTH': np.int32,
         'BLANK': np.int32,
         'TOTAL': np.int32}
-    senate = pd.read_csv(
-        '../Data/tabula-senate_nov16.csv',
-        header=None,
-        names=cols,
-        dtype=coltypes,
-        thousands=',')
     district_class_labels = [
         'Very Conservative',
         'Conservative',
         'Neutral',
         'Liberal',
         'Very Liberal']
+    senate = pd.read_csv(
+        '../Data/tabula-senate_nov16.csv',
+        header=None,
+        names=cols,
+        dtype=coltypes,
+        thousands=',')
     senate['DemPct'] = senate['DEM'] / senate['TOTAL']
     senate['DistrictClass'] = pd.qcut(
         senate['DemPct'],
@@ -185,7 +197,7 @@ if __name__ == "__main__":
         congress['DemPct'],
         5,
         labels=district_class_labels)
-    df = pd.read_csv("../Data/elections.csv")
+    df = pd.read_csv("../Data/2014-2016-elections-raw.csv")
     df.drop('Unnamed: 0', axis=1, inplace=True)
 
     districts = defaultdict(list)
@@ -261,4 +273,4 @@ if __name__ == "__main__":
     df2['2014DemMargin'] = df2['2014DemVotes'] - df2['2014RepVotes']
     df2['2014DemMarginPct'] = 100 * \
         df2['2014DemMargin'] / (df2['2014TotalVotes'])
-    df2.to_excel("../Data/elections.xls")
+    df2.to_excel("../Data/NY State Senate Election Details.xls")
