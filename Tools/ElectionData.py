@@ -5,7 +5,7 @@ Code is given for 2016 and 2014 below, but could easily be extended.  Note the N
 Enrollment data is similar, in that it is only published in PDF format.  This script assumes you have used Tabula to extract this and it is is available in file `../Data/tabula-congress_nov16.csv`, `../Data/tabula-senate_nov16.csv` and `../Data/tabula-assembly_nov16.csv`.
 
 INPUT:  Elections data from web in non-sensible Excel format, enrollment data from scraped PDFs.
-OUTPUT: ../Data/NY State Senate Election Details.xls, Excel sheet of elections data in sensible summary format.
+OUTPUT: ../Data/NY State Senate Election Details.xls, an Excel sheet of elections data in sensible summary format.
 
 """
 
