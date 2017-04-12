@@ -5,6 +5,13 @@ statewide offices.
 
 Download New York files into DIRNAME from
 https://github.com/openelections/openelections-data-ny
+
+TODO:
+    - Subclass this for each county, to handle different county Precinct codes
+        - Handle basics in this superclass
+        - Delegate parsing of precinct codes; keep all info
+         
+
 """
 
 from couchdb.mapping import Document, TextField, IntegerField, DateField

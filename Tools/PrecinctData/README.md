@@ -16,11 +16,9 @@ The goal is to output:
 * Interactive, online maps allowing analysis by volunteers
 * Target lists of precincts for canvassing/phone banking.
 
-Requires
-
 To get setup and start working:
 
 * Install a Scientific Python distribution, e.g. [Anaconda](https://www.continuum.io/downloads)
 * [Download CouchDB](http://couchdb.apache.org) and run.
 * Install the CouchDB Python library, e.g. `$ pip install CouchDB`
-* Inspect and run the scripts.
+* Inspect and run the scripts.  Running each script individually loads data into the DB.

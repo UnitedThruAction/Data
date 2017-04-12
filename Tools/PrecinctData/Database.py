@@ -38,11 +38,11 @@ class Database(object):
                                                   "{emit([doc.census_COUNTY, "
                                                   "doc.census_VTD], doc._id)}}")
         vtd_by_census_county_vtd.sync(self.db)
-        vtd_by_boe_district_code = ViewDefinition("db_views", "vtd_by_boe_district_code",
-                                                  "function(doc) "
-                                                  "{if(doc.doctype =='VTD') "
-                                                  "{emit([doc.boe_district_code], doc._id)}}")
-        vtd_by_boe_district_code.sync(self.db)
+        # vtd_by_boe_district_code = ViewDefinition("db_views", "vtd_by_boe_district_code",
+        #                                           "function(doc) "
+        #                                           "{if(doc.doctype =='VTD') "
+        #                                           "{emit([doc.boe_district_code], doc._id)}}")
+        # vtd_by_boe_district_code.sync(self.db)
 
 
     def get_db(self):
@@ -54,7 +54,7 @@ class QueryType(Enum):
 
     VTD_BY_CENSUS_LOGRECNO = "db_views/vtd_by_census_logrecno"
     VTD_BY_CENSUS_COUNTY_VTD = "db_views/vtd_by_census_county_vtd"
-    VTD_BY_BOE_DISTRICT_CODE = "db_views/vtd_by_boe_district_code"
+    # VTD_BY_BOE_DISTRICT_CODE = "db_views/vtd_by_boe_district_code"
 
 if __name__ == "__main__":
     print("Reinitializing database.")

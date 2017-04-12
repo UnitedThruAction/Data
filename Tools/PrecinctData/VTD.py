@@ -4,6 +4,9 @@ Vote and Enrollment Data from the NY State Board of Elections website.
 See http://www.latfor.state.ny.us/data/
 Download files and extract into DIRNAME.
 
+TODO:
+    -
+
 """
 import os
 import re
@@ -155,8 +158,8 @@ class VTD(Document):
                                 elif file_type == "AD":
                                     vtd.boe_assembly_district = int(ward_ad)
                                 vtd.boe_election_district = int(ed)
-                                vtd.boe_district_code = "{:03.0f}/{:02.0f}" .format(
-                                    int(ed), int(ward_ad))
+                                # vtd.boe_district_code = "{:03.0f}/{:02.0f}" .format(
+                                #     int(ed), int(ward_ad))
                                 vtd.boe_part_district = bool(len(vtds) > 1)
                                 vtd.store(VTD.DATABASE)
 
