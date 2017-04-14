@@ -28,6 +28,7 @@ class VTD(Document):
     census_LOGRECNO = IntegerField()
     census_STATE = IntegerField()
     census_COUNTY = IntegerField()
+    census_COUSUB = IntegerField()
     census_CBSA = IntegerField()
     census_METDIV = IntegerField()
     census_CSA = IntegerField()
@@ -40,9 +41,8 @@ class VTD(Document):
     census_LSADC = TextField()
 
     boe_ward = IntegerField()
-    boe_election_district = IntegerField()
     boe_assembly_district = IntegerField()
-    boe_COUSUB = IntegerField()
+    boe_election_district = IntegerField()
     boe_district_code = TextField()
     boe_part_district = BooleanField()
 
@@ -63,11 +63,9 @@ class VTD(Document):
         filename = "".join([VTD.DIRNAME, "/ny2010/nygeo2010.pl"])
         filehandle = open(filename, "r")
         for line in filehandle:
-            # State-
-            #   State Legislative District (Lower Chamber)-
-            #       County-Voting District/ Remainder
+            # State-County-Voting District/Remainder-County Subdivision
             census_SUMLEV = int(line[8:11].rstrip().lstrip())
-            if census_SUMLEV == 635:
+            if census_SUMLEV == 710:
                 # Logical Record Number
                 census_LOGRECNO = int(line[18:25].rstrip().lstrip())
 
@@ -75,6 +73,8 @@ class VTD(Document):
                 census_STATE = int(line[27:29].rstrip().lstrip())
                 # FIPS County
                 census_COUNTY = int(line[29:32].rstrip().lstrip())
+                # FIPS County Subdivision
+                census_COUSUB = int(line[36:41].rstrip().lstrip())
                 # Metropolitan Statistical Area/Micropolitan Statistical Area
                 census_CBSA = int(line[112:117].rstrip().lstrip())
                 # Metropolitan Division
@@ -82,8 +82,6 @@ class VTD(Document):
                 # Combined Statistical Area
                 census_CSA = int(line[124:127].rstrip().lstrip())
 
-                # State Legislative District (Lower Chamber)
-                census_SLDL = int(line[158:161].rstrip().lstrip())
                 # Voting District
                 census_VTD = int(line[161:167].rstrip().lstrip())
                 # Voting District Indicator
@@ -103,10 +101,10 @@ class VTD(Document):
                               census_LOGRECNO=census_LOGRECNO,
                               census_STATE=census_STATE,
                               census_COUNTY=census_COUNTY,
+                              census_COUSUB=census_COUSUB,
                               census_CBSA=census_CBSA,
                               census_METDIV=census_METDIV,
                               census_CSA=census_CSA,
-                              census_SLDL=census_SLDL,
                               census_VTD=census_VTD,
                               census_VTDI=census_VTDI,
                               census_NAME=census_NAME,
@@ -119,7 +117,11 @@ class VTD(Document):
     @staticmethod
     def load_vtd_ed_equivalents():
         """Load VTD-ED equivalents.
-        See http://www.latfor.state.ny.us/data/?sec=2010equiv."""
+        See http://www.latfor.state.ny.us/data/?sec=2010equiv.
+
+        For each State/County, maps Census (COUSUB, VTD) ->
+                Election Board (Ward or AD, ED)
+        """
 
         path = "".join([VTD.DIRNAME, "/REDIST_EQUIV"])
         for root, _dirs, files in os.walk(path):
@@ -148,20 +150,20 @@ class VTD(Document):
                                     "File {} line {} has invalid number of columns {}" .format(
                                         filepath, line_num, len(cols)))
                             county, cousub, ward_ad, ed, vtd08 = cols[2:7]
-                            vtds = VTD.load_vtds_from_db(
-                                QueryType.VTD_BY_CENSUS_COUNTY_VTD, [
-                                    int(county), int(vtd08)])
-                            for vtd in vtds:
-                                vtd.boe_COUSUB = int(cousub)
-                                if file_type == "WARD":
-                                    vtd.boe_ward = int(ward_ad)
-                                elif file_type == "AD":
-                                    vtd.boe_assembly_district = int(ward_ad)
-                                vtd.boe_election_district = int(ed)
-                                # vtd.boe_district_code = "{:03.0f}/{:02.0f}" .format(
-                                #     int(ed), int(ward_ad))
-                                vtd.boe_part_district = bool(len(vtds) > 1)
-                                vtd.store(VTD.DATABASE)
+                            try:
+                                vtds = VTD.load_vtds_from_db(
+                                    QueryType.VTD_BY_CENSUS_COUNTY_COUSUB_VTD, [
+                                        int(county), int(cousub), int(vtd08)])
+                                for vtd in vtds:
+                                    if file_type == "WARD":
+                                        vtd.boe_ward = int(ward_ad)
+                                    elif file_type == "AD":
+                                        vtd.boe_assembly_district = int(ward_ad)
+                                    vtd.boe_election_district = int(ed)
+                                    vtd.boe_part_district = bool(len(vtds) > 1)
+                                    vtd.store(VTD.DATABASE)
+                            except ValueError as err:
+                                print("Non-fatal exception: {}".format(err))
 
                         line_num += 1
                     filehandle.close()
@@ -224,7 +226,7 @@ class VTD(Document):
 
 if __name__ == "__main__":
     print("Loading basic VTDs from files.")
-    VTD.load_vtds_from_file()
+    #VTD.load_vtds_from_file()
     print("Loading VTD/ED equivalents.")
     VTD.load_vtd_ed_equivalents()
     print("Loading additional census data.")

@@ -32,18 +32,12 @@ class Database(object):
                                                 "{emit(doc.census_LOGRECNO, "
                                                 "doc._id)}}")
         vtd_by_census_logrecno.sync(self.db)
-        vtd_by_census_county_vtd = ViewDefinition("db_views", "vtd_by_census_county_vtd",
-                                                  "function(doc) "
-                                                  "{if(doc.doctype =='VTD') "
-                                                  "{emit([doc.census_COUNTY, "
-                                                  "doc.census_VTD], doc._id)}}")
-        vtd_by_census_county_vtd.sync(self.db)
-        # vtd_by_boe_district_code = ViewDefinition("db_views", "vtd_by_boe_district_code",
-        #                                           "function(doc) "
-        #                                           "{if(doc.doctype =='VTD') "
-        #                                           "{emit([doc.boe_district_code], doc._id)}}")
-        # vtd_by_boe_district_code.sync(self.db)
-
+        vtd_by_census_county_cousub_vtd = ViewDefinition("db_views", "vtd_by_census_county_vtd",
+                                                         "function(doc) "
+                                                         "{if(doc.doctype =='VTD') "
+                                                         "{emit([doc.census_COUNTY, "
+                                                         "doc.census_COUSUB, doc.census_VTD], doc._id)}}")
+        vtd_by_census_county_cousub_vtd.sync(self.db)
 
     def get_db(self):
         """Return CouchDB database object."""
@@ -53,8 +47,7 @@ class QueryType(Enum):
     """Query types, for use loading objects from the DB."""
 
     VTD_BY_CENSUS_LOGRECNO = "db_views/vtd_by_census_logrecno"
-    VTD_BY_CENSUS_COUNTY_VTD = "db_views/vtd_by_census_county_vtd"
-    # VTD_BY_BOE_DISTRICT_CODE = "db_views/vtd_by_boe_district_code"
+    VTD_BY_CENSUS_COUNTY_COUSUB_VTD = "db_views/vtd_by_census_county_vtd"
 
 if __name__ == "__main__":
     print("Reinitializing database.")
