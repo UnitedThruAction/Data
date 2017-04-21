@@ -226,7 +226,7 @@ class VTD(Document):
 
 if __name__ == "__main__":
     print("Loading basic VTDs from files.")
-    #VTD.load_vtds_from_file()
+    VTD.load_vtds_from_file()
     print("Loading VTD/ED equivalents.")
     VTD.load_vtd_ed_equivalents()
     print("Loading additional census data.")
