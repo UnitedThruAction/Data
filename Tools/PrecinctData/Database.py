@@ -39,6 +39,20 @@ class Database(object):
                                                          "doc.census_COUSUB, doc.census_VTD], doc._id)}}")
         vtd_by_census_county_cousub_vtd.sync(self.db)
 
+        er_by_county_precinct = ViewDefinition("db_views", "er_by_county_precinct",
+                                               "function(doc) "
+                                               "{if(doc.doctype == 'ElectionResult') "
+                                               "{emit([doc.oe_county_name, "
+                                               "doc.oe_precinct], doc._id)}}")
+        er_by_county_precinct.sync(self.db)
+
+        er_by_date_state_election_county_precinct = ViewDefinition("db_views", "er_by_date_state_election_county_precinct",
+                                                                   "function(doc) "
+                                                                   "{if(doc.doctype == 'ElectionResult') "
+                                                                   "{emit([doc.oe_election_date, doc.oe_state, doc.oe_election_name, "
+                                                                   "doc.oe_county_name, doc.oe_precinct], doc._id)}}")
+        er_by_date_state_election_county_precinct.sync(self.db)
+
     def get_db(self):
         """Return CouchDB database object."""
         return self.db
@@ -48,6 +62,8 @@ class QueryType(Enum):
 
     VTD_BY_CENSUS_LOGRECNO = "db_views/vtd_by_census_logrecno"
     VTD_BY_CENSUS_COUNTY_COUSUB_VTD = "db_views/vtd_by_census_county_vtd"
+    ER_BY_COUNTY_PRECINCT = "db_views/er_by_county_precinct"
+    ER_BY_DATE_STATE_ELECTION_COUNTY_PRECINCT = "db_views/er_by_date_state_election_county_precinct"
 
 if __name__ == "__main__":
     print("Reinitializing database.")
