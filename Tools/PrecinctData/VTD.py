@@ -53,11 +53,9 @@ class VTD(Document):
     census_H1_OCCUPANCY = ListField(IntegerField())
 
     @staticmethod
-    def load_vtds_from_file():
+    def load_vtds_from_file(overwrite=False):
         """Load VTDs into database from NY BoE files.
         See https://www.census.gov/prod/cen2010/doc/pl94-171.pdf, p.2-22
-
-        TODO: Make this idempotent by using a CreateOrUpdate method.
         """
 
         filename = "".join([VTD.DIRNAME, "/ny2010/nygeo2010.pl"])
@@ -97,21 +95,42 @@ class VTD(Document):
                 # Legal/Statistical Area Description Code
                 census_LSADC = line[359:361].rstrip().lstrip()
 
-                new_vtd = VTD(doctype="VTD",
-                              census_LOGRECNO=census_LOGRECNO,
-                              census_STATE=census_STATE,
-                              census_COUNTY=census_COUNTY,
-                              census_COUSUB=census_COUSUB,
-                              census_CBSA=census_CBSA,
-                              census_METDIV=census_METDIV,
-                              census_CSA=census_CSA,
-                              census_VTD=census_VTD,
-                              census_VTDI=census_VTDI,
-                              census_NAME=census_NAME,
-                              census_INTPTLAT=census_INTPTLAT,
-                              census_INTPTLON=census_INTPTLON,
-                              census_LSADC=census_LSADC)
-                new_vtd.store(VTD.DATABASE)
+                try:
+                    vtds = VTD.load_vtds_from_db(QueryType.VTD_BY_CENSUS_LOGRECNO, census_LOGRECNO)
+                    if overwrite:
+                        for vtd in vtds:
+                            vtd.doctype = "VTD"
+                            vtd.census_LOGRECNO = census_LOGRECNO
+                            vtd.census_STATE = census_STATE
+                            vtd.census_COUNTY = census_COUNTY
+                            vtd.census_COUSUB = census_COUSUB
+                            vtd.census_CBSA = census_CBSA
+                            vtd.census_METDIV = census_METDIV
+                            vtd.census_CSA = census_CSA
+                            vtd.census_VTD = census_VTD
+                            vtd.census_VTDI = census_VTDI
+                            vtd.census_NAME = census_NAME
+                            vtd.census_INTPTLAT = census_INTPTLAT
+                            vtd.census_INTPTLON = census_INTPTLON
+                            vtd.census_LSADC
+                            vtd.store(VTD.DATABASE)
+                except ValueError:
+                    new_vtd = VTD(doctype="VTD",
+                                  census_LOGRECNO=census_LOGRECNO,
+                                  census_STATE=census_STATE,
+                                  census_COUNTY=census_COUNTY,
+                                  census_COUSUB=census_COUSUB,
+                                  census_CBSA=census_CBSA,
+                                  census_METDIV=census_METDIV,
+                                  census_CSA=census_CSA,
+                                  census_VTD=census_VTD,
+                                  census_VTDI=census_VTDI,
+                                  census_NAME=census_NAME,
+                                  census_INTPTLAT=census_INTPTLAT,
+                                  census_INTPTLON=census_INTPTLON,
+                                  census_LSADC=census_LSADC)
+                    new_vtd.store(VTD.DATABASE)
+
         filehandle.close()
 
     @staticmethod
@@ -224,10 +243,14 @@ class VTD(Document):
                              .format(query_type, key))
         return [VTD.load(VTD.DATABASE, uuid) for uuid in uuids]
 
+    @staticmethod
+    def main():
+        print("Loading basic VTDs from files.")
+        VTD.load_vtds_from_file()
+        print("Loading VTD/ED equivalents.")
+        VTD.load_vtd_ed_equivalents()
+        print("Loading additional census data.")
+        VTD.load_additional_census_data()
+
 if __name__ == "__main__":
-    print("Loading basic VTDs from files.")
-    VTD.load_vtds_from_file()
-    print("Loading VTD/ED equivalents.")
-    VTD.load_vtd_ed_equivalents()
-    print("Loading additional census data.")
-    VTD.load_additional_census_data()
+    VTD.main()

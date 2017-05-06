@@ -19,6 +19,6 @@ The goal is to output:
 To get setup and start working:
 
 * Install a Scientific Python distribution, e.g. [Anaconda](https://www.continuum.io/downloads)
-* [Download CouchDB](http://couchdb.apache.org) and run.
+* [Download CouchDB](http://couchdb.apache.org) and run locally.
 * Install the CouchDB Python library, e.g. `$ pip install CouchDB`
-* Inspect and run the scripts.  Running each script individually loads data into the DB.
+* Run `$ python PrecinctData.py` to load, process and print results.
