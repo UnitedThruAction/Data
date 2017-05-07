@@ -10,6 +10,11 @@ class PrecinctData(object):
         pass
 
     @staticmethod
+    def download_data():
+        # TODO: Add download steps
+        pass
+
+    @staticmethod
     def load_data():
         Database.main()
         VTD.main()
@@ -17,6 +22,7 @@ class PrecinctData(object):
 
     @staticmethod
     def main():
+        PrecinctData.download_data()
         PrecinctData.load_data()
 
 if __name__ == "__main__":

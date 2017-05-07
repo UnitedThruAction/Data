@@ -83,8 +83,8 @@ class ElectionResult(Document):
 
                 # Get ID if already exists; then save if appropriate
                 # TODO: Refactor this to use load_ers_from_db() method
-                querytype = QueryType.ER_BY_DATE_STATE_ELECTION_COUNTY_PRECINCT.value
-                key = [str(oe_election_date), oe_state, oe_election_name, oe_county_name, oe_precinct]
+                querytype = QueryType.ER_BY_DATE_STATE_ELECTION_COUNTY_PRECINCT_OFFICE_DISTRICT_PARTY_CANDIDATE.value
+                key = [str(oe_election_date), oe_state, oe_election_name, oe_county_name, oe_precinct, oe_office, oe_district, oe_party, oe_candidate]
                 uuids = [doc.value for doc in ElectionResult.DATABASE.view(querytype)[key]]
                 if len(uuids) == 0:
                     # New doc
