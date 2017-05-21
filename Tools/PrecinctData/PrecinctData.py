@@ -11,7 +11,6 @@ class PrecinctData(object):
 
     @staticmethod
     def download_data():
-        # TODO: Add download steps
         pass
 
     @staticmethod
@@ -21,9 +20,14 @@ class PrecinctData(object):
         ElectionResult.main()
 
     @staticmethod
+    def output_data():
+        pass
+
+    @staticmethod
     def main():
         PrecinctData.download_data()
         PrecinctData.load_data()
+        PrecinctData.output_data()
 
 if __name__ == "__main__":
     PrecinctData.main()

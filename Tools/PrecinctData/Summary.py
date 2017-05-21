@@ -4,6 +4,8 @@ from collections import defaultdict
 
 from Database import Database, QueryType
 from ElectionResult import ElectionResult
+from VTD import VTD
+from PrecinctCodeMap import PrecinctCodeMap
 
 class Summary(object):
     """Calculate summaries for a given range of EDs."""
@@ -13,34 +15,22 @@ class Summary(object):
     def __init__(self):
         pass
 
-    def generate(self):
+    @staticmethod
+    def generate(querytype, key):
         """Generate summary."""
 
         NestedDict = lambda: defaultdict(NestedDict)
         cache = NestedDict()
 
-        # Get all ElectionResults for this county and collapse to one record per ED.
-        # We deliberately want to collapse in time.
-        querytype = QueryType.ER_BY_COUNTY_PRECINCT
-        for doc in Summary.DATABASE.view(querytype.value):
-            oe_county_name, oe_precinct = doc.key
-            er = ElectionResult.load(Summary.DATABASE, doc.value)
-            cache[oe_county_name][oe_precinct][er.oe_election_date][er.oe_office][er.oe_party] 
-            # Need cache of shape county - precinct - date - office - party
-
-        # Parse ED precinct codes (using county-specific rule) to look up VTDs.
-
-
-        # Summarize down further to one row per VTD.
-
-
-        # Output.
+        vtds = VTD.load_vtds_from_db(querytype, key)
+        # Nassau county for debugging only
+        for vtd in vtds:
+            county, precinct = PrecinctCodeMap.county_precinct_from_vtd(vtd)
+            ers = ElectionResult.load_ers_from_db(QueryType.ER_BY_COUNTY_PRECINCT,
+                                                  [county, precinct])
 
 
 
-    @staticmethod
-    def main():
-        pass
 
 if __name__ == "__main__":
-    Summary.main()
+    Summary.generate(QueryType.VTD_BY_CENSUS_COUNTY, 59)
