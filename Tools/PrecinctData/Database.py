@@ -53,6 +53,14 @@ class Database(object):
                                                "doc.oe_precinct], doc._id)}}")
         er_by_county_precinct.sync(self.db)
 
+        er_by_date_office_district = ViewDefinition("db_views", "er_by_date_office_district",
+                                                    "function(doc) "
+                                                    "{if(doc.doctype == 'ElectionResult') "
+                                                    "{emit([doc.oe_election_date, doc.oe_office, doc.oe_district], doc._id)}}")
+
+        er_by_date_office_district.sync(self.db)
+
+
         er_by_date_state_election_county_precinct_office_district_party_candidate = ViewDefinition("db_views", "er_by_date_state_election_county_precinct_office_district_party_candidate",
                                                                    "function(doc) "
                                                                    "{if(doc.doctype == 'ElectionResult') "
@@ -76,6 +84,7 @@ class QueryType(Enum):
     VTD_BY_CENSUS_COUNTY = "db_views/vtd_by_census_county"
     VTD_BY_CENSUS_COUNTY_COUSUB_VTD = "db_views/vtd_by_census_county_cousub_vtd"
     ER_BY_COUNTY_PRECINCT = "db_views/er_by_county_precinct"
+    ER_BY_DATE_OFFICE_DISTRICT = "db_views/er_by_date_office_district"
     ER_BY_DATE_STATE_ELECTION_COUNTY_PRECINCT_OFFICE_DISTRICT_PARTY_CANDIDATE = "db_views/er_by_date_state_election_county_precinct_office_district_party_candidate"
 
 if __name__ == "__main__":

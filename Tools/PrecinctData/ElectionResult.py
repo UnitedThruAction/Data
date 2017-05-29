@@ -36,7 +36,7 @@ class ElectionResult(Document):
     oe_party = TextField()
     oe_candidate = TextField()
     oe_votes = IntegerField()
-    oe_public_counter_votes = IntegerField()
+    oe_public_counter_votes = IntegerField() # total in that precinct
     oe_emergency_votes = IntegerField()
     oe_absentee_military_votes = IntegerField()
     oe_federal_votes = IntegerField()
@@ -57,7 +57,7 @@ class ElectionResult(Document):
                                     int(m.group(1)[6:8]))
             oe_state = m.group(2).upper()
             oe_election_name = m.group(3).replace("__", " ").title()
-            oe_county_name = m.group(4).title()
+            oe_county_name = m.group(4).replace("_", " ").title()
         else:
             raise TypeError("Filename does not match precinct type.")
 
@@ -164,7 +164,8 @@ class ElectionResult(Document):
     @staticmethod
     def main():
         print("Loading Election Result files.")
-        ElectionResult.load_files_by_regexp(".*2016.*(nassau|suffolk)__precinct.csv")
+        #ElectionResult.load_files_by_regexp(".*2016.*(nassau|suffolk)__precinct.csv")
+        ElectionResult.load_files_by_regexp(".*new_york__precinct.csv")
 
 if __name__ == "__main__":
     ElectionResult.main()

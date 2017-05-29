@@ -2,6 +2,7 @@
 
 Taken from the following sources:
 	NY_STATE_COUNTIES	http://library.columbia.edu/locations/dssc/data/nycounty_fips.html
+	VOTER_FILE_COUNTIES   Uh... painful experience
 """
 
 
@@ -67,3 +68,5 @@ NY_STATE_COUNTIES = {1: "Albany",
                      119: "Westchester",
                      121: "Wyoming",
                      123: "Yates"}
+
+VOTER_FILE_COUNTIES = {(i + 1):v for i, v in enumerate(sorted(NY_STATE_COUNTIES.values()))}
