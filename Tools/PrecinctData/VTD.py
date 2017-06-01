@@ -15,6 +15,7 @@ from collections import defaultdict
 from couchdb.mapping import Document, TextField, IntegerField, BooleanField, ListField
 
 from Database import Database, QueryType
+from CensusMatrices import P1_RACE_MATRIX, P2_HISPANIC_MATRIX, P3_RACE_18OVER, P4_HISPANIC_18OVER, H1_OCCUPANCY
 
 
 class VTD(Document):
@@ -251,6 +252,47 @@ class VTD(Document):
         VTD.load_vtd_ed_equivalents()
         print("Loading additional census data.")
         VTD.load_additional_census_data()
+
+    def to_dict(self):
+        """Convert VTD to dict for use with Pandas.
+        TODO: Make this less horrible.  self.__dict__ doesn't work."""
+
+        temp_dict = {}
+        temp_dict['census_LOGRECNO'] = self.census_LOGRECNO
+        temp_dict['census_STATE'] = self.census_STATE
+        temp_dict['census_COUNTY'] = self.census_COUNTY
+        temp_dict['census_COUSUB'] = self.census_COUSUB
+        temp_dict['census_CBSA'] = self.census_CBSA
+        temp_dict['census_METDIV'] = self.census_METDIV
+        temp_dict['census_CSA'] = self.census_CSA
+        temp_dict['census_SLDL'] = self.census_SLDL
+        temp_dict['census_VTD'] = self.census_VTD
+        temp_dict['census_VTDI'] = self.census_VTDI
+        temp_dict['census_NAME'] = self.census_NAME
+        temp_dict['census_INTPTLAT'] = self.census_INTPTLAT
+        temp_dict['census_INTPTLON'] = self.census_INTPTLON
+        temp_dict['census_LSADC'] = self.census_LSADC
+
+        temp_dict['boe_ward'] = self.boe_ward
+        temp_dict['boe_assembly_district'] = self.boe_assembly_district
+        temp_dict['boe_election_district'] = self.boe_election_district
+        temp_dict['boe_district_code'] = self.boe_district_code
+        temp_dict['boe_part_district'] = self.boe_part_district
+
+        # Only convert handful of most populous race categories.
+        for i in range(9): # ...to "Two or More Races"
+            temp_dict["All ages, " + P1_RACE_MATRIX[i]] = self.census_P1_RACE[i]
+            temp_dict["18 and over, " + P3_RACE_18OVER[i]] = self.census_P3_RACE_18OVER[i]
+
+        for i in range(11): # ...to "Not Hispanic or Latino; Two or More Races"
+            temp_dict["All ages, " + P2_HISPANIC_MATRIX[i]] = self.census_P2_HISPANIC[i]
+            temp_dict["18 and over, " + P4_HISPANIC_18OVER[i]] = self.census_P4_HISPANIC_18OVER[i]
+
+        for i in range(3):
+            temp_dict[H1_OCCUPANCY[i]] = self.census_H1_OCCUPANCY[i]
+
+        return temp_dict
+
 
 if __name__ == "__main__":
     VTD.main()

@@ -167,5 +167,31 @@ class ElectionResult(Document):
         #ElectionResult.load_files_by_regexp(".*2016.*(nassau|suffolk)__precinct.csv")
         ElectionResult.load_files_by_regexp(".*new_york__precinct.csv")
 
+    def to_dict(self):
+        """Convert ER to dict for use with Pandas.
+        TODO: Make this less horrible.  self.__dict__ doesn't work."""
+
+        temp_dict = {}
+        temp_dict['oe_election_date'] = self.oe_election_date
+        temp_dict['oe_state'] = self.oe_state
+        temp_dict['oe_election_name'] = self.oe_election_name
+        temp_dict['oe_county_name'] = self.oe_county_name
+
+        temp_dict['oe_precinct'] = self.oe_precinct
+        temp_dict['oe_office'] = self.oe_office
+        temp_dict['oe_district'] = self.oe_district
+        temp_dict['oe_party'] = self.oe_party
+        temp_dict['oe_candidate'] = self.oe_candidate
+        temp_dict['oe_votes'] = self.oe_votes
+        temp_dict['oe_public_counter_votes'] = self.oe_public_counter_votes # total in that precinct
+        temp_dict['oe_emergency_votes'] = self.oe_emergency_votes
+        temp_dict['oe_absentee_military_votes'] = self.oe_absentee_military_votes
+        temp_dict['oe_federal_votes'] = self.oe_federal_votes
+        temp_dict['oe_affidavit_votes'] = self.oe_affidavit_votes
+        temp_dict['oe_manually_counted_emergency'] = self.oe_manually_counted_emergency
+        temp_dict['oe_special_presidential'] = self.oe_special_presidential
+
+        return temp_dict
+
 if __name__ == "__main__":
     ElectionResult.main()
