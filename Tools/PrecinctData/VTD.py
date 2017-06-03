@@ -12,7 +12,7 @@ import os
 import re
 from collections import defaultdict
 
-from couchdb.mapping import Document, TextField, IntegerField, BooleanField, ListField
+from couchdb.mapping import Document, TextField, IntegerField, ListField, DictField
 
 from Database import Database, QueryType
 from CensusMatrices import P1_RACE_MATRIX, P2_HISPANIC_MATRIX, P3_RACE_18OVER, P4_HISPANIC_18OVER, H1_OCCUPANCY
@@ -41,11 +41,7 @@ class VTD(Document):
     census_INTPTLON = TextField()
     census_LSADC = TextField()
 
-    boe_ward = IntegerField()
-    boe_assembly_district = IntegerField()
-    boe_election_district = IntegerField()
-    boe_district_code = TextField()
-    boe_part_district = BooleanField()
+    boe_eds = ListField(DictField())
 
     census_P1_RACE = ListField(IntegerField())
     census_P2_HISPANIC = ListField(IntegerField())
@@ -113,7 +109,7 @@ class VTD(Document):
                             vtd.census_NAME = census_NAME
                             vtd.census_INTPTLAT = census_INTPTLAT
                             vtd.census_INTPTLON = census_INTPTLON
-                            vtd.census_LSADC
+                            vtd.census_LSADC = census_LSADC
                             vtd.store(VTD.DATABASE)
                 except ValueError:
                     new_vtd = VTD(doctype="VTD",
@@ -143,6 +139,7 @@ class VTD(Document):
                 Election Board (Ward or AD, ED)
         """
 
+        # Load data from flat files.
         path = "".join([VTD.DIRNAME, "/REDIST_EQUIV"])
         for root, _dirs, files in os.walk(path):
             for filename in files:
@@ -170,22 +167,34 @@ class VTD(Document):
                                     "File {} line {} has invalid number of columns {}" .format(
                                         filepath, line_num, len(cols)))
                             county, cousub, ward_ad, ed, vtd08 = cols[2:7]
+
                             try:
                                 vtds = VTD.load_vtds_from_db(
                                     QueryType.VTD_BY_CENSUS_COUNTY_COUSUB_VTD, [
                                         int(county), int(cousub), int(vtd08)])
+                                if len(vtds) > 1:
+                                    raise ValueError("More than one VTD returned for county {}, cousub {}, vtd {}"\
+                                                     .format(county, cousub, vtd08))
                                 for vtd in vtds:
                                     if file_type == "WARD":
-                                        vtd.boe_ward = int(ward_ad)
+                                        new = {'ward':int(ward_ad), 'ed':int(ed)}
+                                        if not vtd.boe_eds:
+                                            vtd.boe_eds = [new]
+                                        else:
+                                            vtd.boe_eds.append(new)
                                     elif file_type == "AD":
-                                        vtd.boe_assembly_district = int(ward_ad)
-                                    vtd.boe_election_district = int(ed)
-                                    vtd.boe_part_district = bool(len(vtds) > 1)
+                                        new = {'ad':int(ward_ad), 'ed':int(ed)}
+                                        if not vtd.boe_eds:
+                                            vtd.boe_eds = [new]
+                                        else:
+                                            vtd.boe_eds.append(new)
+
                                     vtd.store(VTD.DATABASE)
                             except ValueError as err:
                                 print("Non-fatal exception: {}".format(err))
 
                         line_num += 1
+
                     filehandle.close()
 
     @staticmethod
@@ -273,11 +282,7 @@ class VTD(Document):
         temp_dict['census_INTPTLON'] = self.census_INTPTLON
         temp_dict['census_LSADC'] = self.census_LSADC
 
-        temp_dict['boe_ward'] = self.boe_ward
-        temp_dict['boe_assembly_district'] = self.boe_assembly_district
-        temp_dict['boe_election_district'] = self.boe_election_district
-        temp_dict['boe_district_code'] = self.boe_district_code
-        temp_dict['boe_part_district'] = self.boe_part_district
+        temp_dict['boe_eds'] = self.boe_eds
 
         # Only convert handful of most populous race categories.
         for i in range(9): # ...to "Two or More Races"
