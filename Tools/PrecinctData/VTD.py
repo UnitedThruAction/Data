@@ -15,6 +15,7 @@ from collections import defaultdict
 from couchdb.mapping import Document, TextField, IntegerField, ListField, DictField
 
 from Database import Database, QueryType
+from Cousub import Cousub
 from CensusMatrices import P1_RACE_MATRIX, P2_HISPANIC_MATRIX, P3_RACE_18OVER, P4_HISPANIC_18OVER, H1_OCCUPANCY
 
 
@@ -30,6 +31,7 @@ class VTD(Document):
     census_STATE = IntegerField()
     census_COUNTY = IntegerField()
     census_COUSUB = IntegerField()
+    census_COUSUB_NAME = TextField()
     census_CBSA = IntegerField()
     census_METDIV = IntegerField()
     census_CSA = IntegerField()
@@ -60,7 +62,7 @@ class VTD(Document):
         for line in filehandle:
             # State-County-Voting District/Remainder-County Subdivision
             census_SUMLEV = int(line[8:11].rstrip().lstrip())
-            if census_SUMLEV == 710:
+            if census_SUMLEV == 710: # VTD
                 # Logical Record Number
                 census_LOGRECNO = int(line[18:25].rstrip().lstrip())
 
@@ -70,6 +72,7 @@ class VTD(Document):
                 census_COUNTY = int(line[29:32].rstrip().lstrip())
                 # FIPS County Subdivision
                 census_COUSUB = int(line[36:41].rstrip().lstrip())
+                census_COUSUB_NAME = Cousub.get_cousub_name(census_COUNTY, census_COUSUB)
                 # Metropolitan Statistical Area/Micropolitan Statistical Area
                 census_CBSA = int(line[112:117].rstrip().lstrip())
                 # Metropolitan Division
@@ -101,6 +104,7 @@ class VTD(Document):
                             vtd.census_STATE = census_STATE
                             vtd.census_COUNTY = census_COUNTY
                             vtd.census_COUSUB = census_COUSUB
+                            vtd.census_COUSUB_NAME = census_COUSUB_NAME
                             vtd.census_CBSA = census_CBSA
                             vtd.census_METDIV = census_METDIV
                             vtd.census_CSA = census_CSA
@@ -117,6 +121,7 @@ class VTD(Document):
                                   census_STATE=census_STATE,
                                   census_COUNTY=census_COUNTY,
                                   census_COUSUB=census_COUSUB,
+                                  census_COUSUB_NAME=census_COUSUB_NAME,
                                   census_CBSA=census_CBSA,
                                   census_METDIV=census_METDIV,
                                   census_CSA=census_CSA,
@@ -271,6 +276,7 @@ class VTD(Document):
         temp_dict['census_STATE'] = self.census_STATE
         temp_dict['census_COUNTY'] = self.census_COUNTY
         temp_dict['census_COUSUB'] = self.census_COUSUB
+        temp_dict['census_COUSUB_NAME'] = self.census_COUSUB_NAME
         temp_dict['census_CBSA'] = self.census_CBSA
         temp_dict['census_METDIV'] = self.census_METDIV
         temp_dict['census_CSA'] = self.census_CSA

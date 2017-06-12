@@ -16,7 +16,7 @@ class Database(object):
 
     @staticmethod
     def main():
-        print("Reinitializing database.")
+        print("Reinitializing database objects.")
         _DATABASE = Database()
 
     def __init__(self):
@@ -85,6 +85,30 @@ class Database(object):
                                              "{emit([doc.vf_countyname, doc.vf_ed_code], doc._id)}}")
         ed_by_county_edcode.sync(self.db)
 
+        ed_by_ad = ViewDefinition("db_views", "ed_by_ad",
+                                  "function(doc) "
+                                  "{if(doc.doctype == 'ElectionDistrict') "
+                                  "{emit(doc.vf_ad_number, doc._id)}}")
+        ed_by_ad.sync(self.db)
+
+        ed_by_sd = ViewDefinition("db_views", "ed_by_sd",
+                                  "function(doc) "
+                                  "{if(doc.doctype == 'ElectionDistrict') "
+                                  "{emit(doc.vf_sd_number, doc._id)}}")
+        ed_by_sd.sync(self.db)
+
+        cousub_by_census_logrecno = ViewDefinition("db_views", "cousub_by_census_logrecno",
+                                                   "function(doc) "
+                                                   "{if(doc.doctype == 'Cousub') "
+                                                   "{emit(doc.census_LOGRECNO, doc._id)}}")
+        cousub_by_census_logrecno.sync(self.db)
+
+        cousub_by_county_cousub = ViewDefinition("db_views", "cousub_by_county_cousub",
+                                                 "function(doc) "
+                                                 "{if(doc.doctype == 'Cousub') "
+                                                 "{emit([doc.census_COUNTY, doc.census_COUSUB], doc._id)}}")
+        cousub_by_county_cousub.sync(self.db)
+
     def get_db(self):
         """Return CouchDB database object."""
         return self.db
@@ -105,6 +129,10 @@ class QueryType(Enum):
     ER_BY_DATE_OFFICE_DISTRICT = "db_views/er_by_date_office_district"
     ER_BY_DATE_STATE_ELECTION_COUNTY_PRECINCT_OFFICE_DISTRICT_PARTY_CANDIDATE = "db_views/er_by_date_state_election_county_precinct_office_district_party_candidate"
     ED_BY_COUNTY_EDCODE = "db_views/ed_by_county_edcode"
+    ED_BY_AD = "db_views/ed_by_ad"
+    ED_BY_SD = "db_views/ed_by_sd"
+    COUSUB_BY_CENSUS_LOGRECNO = "db_views/cousub_by_census_logrecno"
+    COUSUB_BY_COUNTY_COUSUB = "db_views/cousub_by_county_cousub"
 
 if __name__ == "__main__":
     Database.main()

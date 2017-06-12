@@ -1,8 +1,10 @@
 """Main class to load, process and export Precinct Data."""
 
 from Database import Database
+from Cousub import Cousub
 from VTD import VTD
 from ElectionResult import ElectionResult
+from ElectionDistrict import ElectionDistrict
 
 class PrecinctData(object):
 
@@ -16,8 +18,10 @@ class PrecinctData(object):
     @staticmethod
     def load_data():
         Database.main()
+        Cousub.main()
         VTD.main()
         ElectionResult.main()
+        ElectionDistrict.main()
 
     @staticmethod
     def output_data():

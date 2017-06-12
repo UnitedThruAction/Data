@@ -42,16 +42,30 @@ class ElectionDistrict(Document):
 
     @staticmethod
     def get_ed_code(countyname, towncity, ward, ad, ed):
-        """Generate county-specific ED code from parameters."""
+        """Generate county-specific ED code from parameters.
+
+        *** HUGE FLASHING WARNING ***
+        Each county uses its own specific format.
+        The first time you use this to match for a particular county, you'll
+        need to contribute additional clauses here to make it work.
+
+        """
+        if countyname in ['Albany']:
+            # e.g. "0009 ALBANY W1 ED9"
+            # NB doesn't work - requires seq_no from somewhere
+            seq_no = 0
+            return "{} {} W{} ED{}".format(seq_no, towncity.upper(), ward, ed)
         if countyname in ['Nassau']:
             # e.g. "OB  09  016"
             return "{}  {:02.0f}  {:03.0f}".format(towncity, ad, ed)
         if countyname in ['Bronx', 'New York', 'Kings', 'Queens', 'Richmond']:
             # e.g. "001/67"
             return "{:03.0f}/{:02.0f}".format(ed, ad)
-        else:
+        if countyname in ['Suffolk']:
             # e.g. "Babylon #:  01"
             return "{} #: {:>3}".format(towncity.title(), "{:02.0f}".format(ed))
+        else:
+            return "Not yet implemented"
 
     @staticmethod
     def load_whole_voter_file(overwrite=True):
@@ -158,6 +172,29 @@ class ElectionDistrict(Document):
 
                 eds_complete += 1
 
+        print("\nComplete.")
+
+    @staticmethod
+    def main():
+        print("Loading Election District files.")
+        ElectionDistrict.load_whole_voter_file()
+
+    def to_dict(self):
+        """Export to dict."""
+        temp_dict = {}
+        temp_dict['vf_countyname'] = self.vf_countyname
+        temp_dict['vf_ed_number'] = self.vf_ed_number
+        temp_dict['vf_ld_number'] = self.vf_ld_number
+        temp_dict['vf_towncity_character'] = self.vf_towncity_character
+        temp_dict['vf_ward_character'] = self.vf_ward_character
+        temp_dict['vf_cd_number'] = self.vf_cd_number
+        temp_dict['vf_sd_number'] = self.vf_sd_number
+        temp_dict['vf_ad_number'] = self.vf_ad_number
+        temp_dict['vf_ed_code'] = self.vf_ed_code
+        temp_dict['vf_registration'] = self.vf_registration
+        temp_dict['vf_participation'] = self.vf_participation
+        return temp_dict
+
 class Unbuffered(object):
     """A wrapper for stdout to unbuffer output on command line."""
     def __init__(self, stream):
@@ -172,4 +209,4 @@ class Unbuffered(object):
 
 if __name__ == "__main__":
     sys.stdout = Unbuffered(sys.stdout)
-    ElectionDistrict.load_whole_voter_file()
+    ElectionDistrict.main()
