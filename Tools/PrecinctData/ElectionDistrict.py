@@ -5,7 +5,6 @@ Elections."""
 import os
 import csv
 import sys
-import math
 from collections import defaultdict
 from couchdb.mapping import Document, TextField, IntegerField, DictField
 
