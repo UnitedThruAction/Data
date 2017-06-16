@@ -3,6 +3,8 @@
 See https://pythonhosted.org/CouchDB/
 """
 
+import sys
+
 from enum import Enum
 
 from couchdb.client import Server
@@ -135,4 +137,11 @@ class QueryType(Enum):
     COUSUB_BY_COUNTY_COUSUB = "db_views/cousub_by_county_cousub"
 
 if __name__ == "__main__":
-    Database.main()
+    if len(sys.argv) < 1:
+        Database.main()
+    else:
+        if sys.argv[1] == 'delete_by_class':
+            d = Database()
+            d.delete_by_class(sys.argv[2])
+        else:
+            raise ValueError('Unexpected argument to Database.py')

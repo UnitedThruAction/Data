@@ -67,6 +67,8 @@ class ElectionResult(Document):
             for row in reader:
                 if row['county'] != oe_county_name:
                     raise ValueError("Mismatch of county name in file {}".format(filename))
+                if 'Total' in oe_precinct: # e.g. 'Total for Babylon' instead of 'Babylon #: 154'
+                    continue
                 oe_precinct = row['precinct'] if 'precinct' in row else ""
                 oe_office = row['office'] if 'office' in row else ""
                 oe_district = row['district'] if 'district' in row else ""

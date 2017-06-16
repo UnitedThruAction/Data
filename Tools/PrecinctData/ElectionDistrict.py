@@ -99,26 +99,26 @@ class ElectionDistrict(Document):
                 if rows_processed % 100000 == 0:
                     print(".", end='') # progress indicator
 
-                countyname = VOTER_FILE_COUNTIES[int(row['COUNTYCODE'])]
-                vf_ed_code = ElectionDistrict.get_ed_code(countyname,
-                                                          row['TOWNCITY'],
-                                                          row['WARD'],
-                                                          int(row['AD']),
-                                                          int(row['ED']))
-                district = cache[countyname][vf_ed_code]
-                district['vf_ed_number'] = int(row['ED']) if row['ED'] else 0
-                district['vf_ld_number'] = int(row['LD']) if row['LD'] else 0
-                district['vf_towncity_character'] = row['TOWNCITY']
-                district['vf_ward_character'] = row['WARD']
-                district['vf_cd_number'] = int(row['CD']) if row['CD'] else 0
-                district['vf_sd_number'] = int(row['SD']) if row['SD'] else 0
-                district['vf_ad_number'] = int(row['AD']) if row['AD'] else 0
-                district['vf_registration'][row['ENROLLMENT']] += 1
-                for election in row['VoterHistory'].split(';'):
-                    district['vf_participation'][election] += 1
-                    elections[election] = True
+                if row['STATUS'] == 'ACTIVE':
+                    countyname = VOTER_FILE_COUNTIES[int(row['COUNTYCODE'])]
+                    vf_ed_code = ElectionDistrict.get_ed_code(countyname,
+                                                              row['TOWNCITY'],
+                                                              row['WARD'],
+                                                              int(row['AD']),
+                                                              int(row['ED']))
+                    district = cache[countyname][vf_ed_code]
+                    district['vf_ed_number'] = int(row['ED']) if row['ED'] else 0
+                    district['vf_ld_number'] = int(row['LD']) if row['LD'] else 0
+                    district['vf_towncity_character'] = row['TOWNCITY']
+                    district['vf_ward_character'] = row['WARD']
+                    district['vf_cd_number'] = int(row['CD']) if row['CD'] else 0
+                    district['vf_sd_number'] = int(row['SD']) if row['SD'] else 0
+                    district['vf_ad_number'] = int(row['AD']) if row['AD'] else 0
+                    district['vf_registration'][row['ENROLLMENT']] += 1
+                    for election in row['VoterHistory'].split(';'):
+                        district['vf_participation'][election] += 1
+                        elections[election] = True
 
-                    #rows_errors += 1
                 rows_processed += 1
 
             print("\nCompleted caching voter file.  "
