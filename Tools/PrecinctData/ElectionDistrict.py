@@ -44,9 +44,17 @@ class ElectionDistrict(Document):
         """Generate county-specific ED code from parameters.
 
         *** HUGE FLASHING WARNING ***
-        Each county uses its own specific format.
+        Each county (as reported in OpenElections) uses its own specific format.
         The first time you use this to match for a particular county, you'll
-        need to contribute additional clauses here to make it work.
+        need to contribute additional cases here to make it work.
+        I wish it weren't this way.  Sorry.
+
+        countyname      str     New York
+        towncity        str     Babylon (NB not Babylon Town)
+                                == VTD.census_COUSUB_NAME
+        ward            int     1
+        AD              int     67
+        ED              int     16
 
         """
         if countyname in ['Albany']:
