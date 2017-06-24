@@ -70,6 +70,8 @@ class ElectionDistrict(Document):
             return "{:03.0f}/{:02.0f}".format(ed, ad)
         if countyname in ['Suffolk']:
             # e.g. "Babylon #:  01"
+            if towncity[-5:] == ' Town':
+                towncity = towncity[:-5]
             return "{} #: {:>3}".format(towncity.title(), "{:02.0f}".format(ed))
         else:
             return "Not yet implemented"

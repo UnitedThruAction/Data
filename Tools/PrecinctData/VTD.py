@@ -17,7 +17,8 @@ from couchdb.mapping import Document, TextField, IntegerField, ListField, DictFi
 from Database import Database, QueryType
 from Cousub import Cousub
 from CensusMatrices import P1_RACE_MATRIX, P2_HISPANIC_MATRIX, P3_RACE_18OVER, P4_HISPANIC_18OVER, H1_OCCUPANCY
-
+from ElectionDistrict import ElectionDistrict
+from FIPS import NY_STATE_COUNTIES
 
 class VTD(Document):
     """VTD from the 2010 Census, Vote and Enrollment Data."""
@@ -30,6 +31,7 @@ class VTD(Document):
     census_LOGRECNO = IntegerField()
     census_STATE = IntegerField()
     census_COUNTY = IntegerField()
+    census_COUNTY_NAME = TextField()
     census_COUSUB = IntegerField()
     census_COUSUB_NAME = TextField()
     census_CBSA = IntegerField()
@@ -43,7 +45,7 @@ class VTD(Document):
     census_INTPTLON = TextField()
     census_LSADC = TextField()
 
-    boe_eds = ListField(DictField())
+    boe_eds = ListField(TextField())
 
     census_P1_RACE = ListField(IntegerField())
     census_P2_HISPANIC = ListField(IntegerField())
@@ -70,6 +72,7 @@ class VTD(Document):
                 census_STATE = int(line[27:29].rstrip().lstrip())
                 # FIPS County
                 census_COUNTY = int(line[29:32].rstrip().lstrip())
+                census_COUNTY_NAME = NY_STATE_COUNTIES[census_COUNTY]
                 # FIPS County Subdivision
                 census_COUSUB = int(line[36:41].rstrip().lstrip())
                 census_COUSUB_NAME = Cousub.get_cousub_name(census_COUNTY, census_COUSUB)
@@ -103,6 +106,7 @@ class VTD(Document):
                             vtd.census_LOGRECNO = census_LOGRECNO
                             vtd.census_STATE = census_STATE
                             vtd.census_COUNTY = census_COUNTY
+                            vtd.census_COUNTY_NAME = census_COUNTY_NAME
                             vtd.census_COUSUB = census_COUSUB
                             vtd.census_COUSUB_NAME = census_COUSUB_NAME
                             vtd.census_CBSA = census_CBSA
@@ -120,6 +124,7 @@ class VTD(Document):
                                   census_LOGRECNO=census_LOGRECNO,
                                   census_STATE=census_STATE,
                                   census_COUNTY=census_COUNTY,
+                                  census_COUNTY_NAME=census_COUNTY_NAME,
                                   census_COUSUB=census_COUSUB,
                                   census_COUSUB_NAME=census_COUSUB_NAME,
                                   census_CBSA=census_CBSA,
@@ -181,18 +186,23 @@ class VTD(Document):
                                     raise ValueError("More than one VTD returned for county {}, cousub {}, vtd {}"\
                                                      .format(county, cousub, vtd08))
                                 for vtd in vtds:
+                                    new = None
                                     if file_type == "WARD":
-                                        new = {'ward':int(ward_ad), 'ed':int(ed)}
-                                        if not vtd.boe_eds:
-                                            vtd.boe_eds = [new]
-                                        else:
-                                            vtd.boe_eds.append(new)
+                                        new = ElectionDistrict.get_ed_code(vtd.census_COUNTY_NAME,
+                                                                           vtd.census_COUSUB_NAME,
+                                                                           int(ward_ad),
+                                                                           None,
+                                                                           int(ed))
                                     elif file_type == "AD":
-                                        new = {'ad':int(ward_ad), 'ed':int(ed)}
-                                        if not vtd.boe_eds:
-                                            vtd.boe_eds = [new]
-                                        else:
-                                            vtd.boe_eds.append(new)
+                                        new = ElectionDistrict.get_ed_code(vtd.census_COUNTY_NAME,
+                                                                           vtd.census_COUSUB_NAME,
+                                                                           None,
+                                                                           int(ward_ad),
+                                                                           int(ed))
+                                    if not vtd.boe_eds:
+                                        vtd.boe_eds = [new]
+                                    else:
+                                        vtd.boe_eds.append(new)
 
                                     vtd.store(VTD.DATABASE)
                             except ValueError as err:
@@ -275,6 +285,7 @@ class VTD(Document):
         temp_dict['census_LOGRECNO'] = self.census_LOGRECNO
         temp_dict['census_STATE'] = self.census_STATE
         temp_dict['census_COUNTY'] = self.census_COUNTY
+        temp_dict['census_COUNTY_NAME'] = self.census_COUNTY_NAME
         temp_dict['census_COUSUB'] = self.census_COUSUB
         temp_dict['census_COUSUB_NAME'] = self.census_COUSUB_NAME
         temp_dict['census_CBSA'] = self.census_CBSA

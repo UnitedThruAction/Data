@@ -81,6 +81,12 @@ class Database(object):
                                                                                                    "doc.oe_county_name, doc.oe_precinct, doc.oe_office, doc.oe_district, doc.oe_party, doc.oe_candidate], doc._id)}}")
         er_by_date_state_election_county_precinct_office_district_party_candidate.sync(self.db)
 
+        ed_by_countyname = ViewDefinition("db_views", "ed_by_countyname",
+                                          "function(doc) "
+                                          "{if(doc.doctype == 'ElectionDistrict') "
+                                          "{emit(doc.vf_countyname, doc._id)}}")
+        ed_by_countyname.sync(self.db)
+
         ed_by_county_edcode = ViewDefinition("db_views", "ed_by_county_edcode",
                                              "function(doc) "
                                              "{if(doc.doctype == 'ElectionDistrict') "
@@ -130,6 +136,7 @@ class QueryType(Enum):
     ER_BY_COUNTY_PRECINCT = "db_views/er_by_county_precinct"
     ER_BY_DATE_OFFICE_DISTRICT = "db_views/er_by_date_office_district"
     ER_BY_DATE_STATE_ELECTION_COUNTY_PRECINCT_OFFICE_DISTRICT_PARTY_CANDIDATE = "db_views/er_by_date_state_election_county_precinct_office_district_party_candidate"
+    ED_BY_COUNTYNAME = "db_views/ed_by_countyname"
     ED_BY_COUNTY_EDCODE = "db_views/ed_by_county_edcode"
     ED_BY_AD = "db_views/ed_by_ad"
     ED_BY_SD = "db_views/ed_by_sd"
@@ -137,7 +144,7 @@ class QueryType(Enum):
     COUSUB_BY_COUNTY_COUSUB = "db_views/cousub_by_county_cousub"
 
 if __name__ == "__main__":
-    if len(sys.argv) < 1:
+    if len(sys.argv) < 2:
         Database.main()
     else:
         if sys.argv[1] == 'delete_by_class':

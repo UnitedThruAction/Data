@@ -67,7 +67,7 @@ class ElectionResult(Document):
             for row in reader:
                 if row['county'] != oe_county_name:
                     raise ValueError("Mismatch of county name in file {}".format(filename))
-                if 'Total' in oe_precinct: # e.g. 'Total for Babylon' instead of 'Babylon #: 154'
+                if 'Total' in row['precinct']: # e.g. 'Total for Babylon' instead of 'Babylon #: 154'
                     continue
                 oe_precinct = row['precinct'] if 'precinct' in row else ""
                 oe_office = row['office'] if 'office' in row else ""
@@ -167,7 +167,7 @@ class ElectionResult(Document):
     def main():
         print("Loading Election Result files.")
         #ElectionResult.load_files_by_regexp(".*2016.*(nassau|suffolk)__precinct.csv")
-        ElectionResult.load_files_by_regexp(".*new_york__precinct.csv")
+        ElectionResult.load_files_by_regexp(".*suffolk__precinct.csv")
 
     def to_dict(self):
         """Convert ER to dict for use with Pandas.
