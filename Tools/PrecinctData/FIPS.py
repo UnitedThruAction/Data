@@ -69,4 +69,5 @@ NY_STATE_COUNTIES = {1: "Albany",
                      121: "Wyoming",
                      123: "Yates"}
 
-VOTER_FILE_COUNTIES = {(i + 1):v for i, v in enumerate(sorted(NY_STATE_COUNTIES.values()))}
+VOTER_FILE_COUNTIES = {(i + 1): v for i,
+                       v in enumerate(sorted(NY_STATE_COUNTIES.values()))}

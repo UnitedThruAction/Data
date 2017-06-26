@@ -3,6 +3,7 @@
 from VTD import VTD
 from FIPS import NY_STATE_COUNTIES
 
+
 class PrecinctCodeMap(object):
 
     def __init__(self):
@@ -26,10 +27,8 @@ class ADBasedPrecinctCodeMap(PrecinctCodeMap):
     def county_precinct_from_vtd(vtd):
         county = NY_STATE_COUNTIES[vtd.census_COUNTY]
 
-
-
-
         return county, precinct
+
 
 class WardBasedPrecinctCodeMap(PrecinctCodeMap):
     """Used in all other counties in NY."""
@@ -37,7 +36,5 @@ class WardBasedPrecinctCodeMap(PrecinctCodeMap):
     @staticmethod
     def county_precinct_from_vtd(vtd):
         county = NY_STATE_COUNTIES[vtd.census_COUNTY]
-
-
 
         return county, precinct

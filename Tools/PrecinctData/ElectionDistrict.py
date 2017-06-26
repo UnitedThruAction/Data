@@ -72,7 +72,8 @@ class ElectionDistrict(Document):
             # e.g. "Babylon #:  01"
             if towncity[-5:] == ' Town':
                 towncity = towncity[:-5]
-            return "{} #: {:>3}".format(towncity.title(), "{:02.0f}".format(ed))
+            return "{} #: {:>3}".format(
+                towncity.title(), "{:02.0f}".format(ed))
         else:
             return "Not yet implemented"
 
@@ -81,25 +82,64 @@ class ElectionDistrict(Document):
         """Load the whole voter file into the DB.  ~17 million rows"""
         #NestedDict = lambda: defaultdict(NestedDict)
         #cache = NestedDict()
-        #cache[county][ed_code] ->
+        # cache[county][ed_code] ->
         #    [ed_number] = 2
         #    [registration] = {'DEM':3, 'REP':16, ...}
         #    [participation] = ['general2016':3, ...]
-        cache = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(int))))
+        cache = defaultdict(
+            lambda: defaultdict(
+                lambda: defaultdict(
+                    lambda: defaultdict(int))))
 
         # Cache data from CSV
         print("Caching data from Voter File.")
         rows_processed, rows_errors, elections = 0, 0, {}
-        fieldnames = ['LASTNAME', 'FIRSTNAME', 'MIDDLENAME', 'NAMESUFFIX',
-                      'RADDNUMBER', 'RHALFCODE', 'RAPARTMENT', 'RPREDIRECTION',
-                      'RSTREETNAME', 'RPOSTDIRECTION', 'RCITY', 'RZIP5', 'RZIP4',
-                      'MAILADD1', 'MAILADD2', 'MAILADD3', 'MAILADD4', 'DOB',
-                      'GENDER', 'ENROLLMENT', 'OTHERPARTY', 'COUNTYCODE', 'ED',
-                      'LD', 'TOWNCITY', 'WARD', 'CD', 'SD', 'AD', 'LASTVOTEDATE',
-                      'PREVYEARVOTED', 'PREVCOUNTY', 'PREVADDRESS', 'PREVNAME',
-                      'COUNTYVRNUMBER', 'REGDATE', 'VRSOURCE', 'IDREQUIRED',
-                      'IDMET', 'STATUS', 'REASONCODE', 'INACT_DATE',
-                      'PURGE_DATE', 'SBOEID', 'VoterHistory']
+        fieldnames = [
+            'LASTNAME',
+            'FIRSTNAME',
+            'MIDDLENAME',
+            'NAMESUFFIX',
+            'RADDNUMBER',
+            'RHALFCODE',
+            'RAPARTMENT',
+            'RPREDIRECTION',
+            'RSTREETNAME',
+            'RPOSTDIRECTION',
+            'RCITY',
+            'RZIP5',
+            'RZIP4',
+            'MAILADD1',
+            'MAILADD2',
+            'MAILADD3',
+            'MAILADD4',
+            'DOB',
+            'GENDER',
+            'ENROLLMENT',
+            'OTHERPARTY',
+            'COUNTYCODE',
+            'ED',
+            'LD',
+            'TOWNCITY',
+            'WARD',
+            'CD',
+            'SD',
+            'AD',
+            'LASTVOTEDATE',
+            'PREVYEARVOTED',
+            'PREVCOUNTY',
+            'PREVADDRESS',
+            'PREVNAME',
+            'COUNTYVRNUMBER',
+            'REGDATE',
+            'VRSOURCE',
+            'IDREQUIRED',
+            'IDMET',
+            'STATUS',
+            'REASONCODE',
+            'INACT_DATE',
+            'PURGE_DATE',
+            'SBOEID',
+            'VoterHistory']
 
         with open(os.path.join(ElectionDistrict.DIRNAME,
                                ElectionDistrict.FILENAME),
@@ -107,7 +147,7 @@ class ElectionDistrict(Document):
             reader = csv.DictReader(csvfile, fieldnames=fieldnames)
             for row in reader:
                 if rows_processed % 100000 == 0:
-                    print(".", end='') # progress indicator
+                    print(".", end='')  # progress indicator
 
                 if row['STATUS'] == 'ACTIVE':
                     countyname = VOTER_FILE_COUNTIES[int(row['COUNTYCODE'])]
@@ -117,13 +157,18 @@ class ElectionDistrict(Document):
                                                               int(row['AD']),
                                                               int(row['ED']))
                     district = cache[countyname][vf_ed_code]
-                    district['vf_ed_number'] = int(row['ED']) if row['ED'] else 0
-                    district['vf_ld_number'] = int(row['LD']) if row['LD'] else 0
+                    district['vf_ed_number'] = int(
+                        row['ED']) if row['ED'] else 0
+                    district['vf_ld_number'] = int(
+                        row['LD']) if row['LD'] else 0
                     district['vf_towncity_character'] = row['TOWNCITY']
                     district['vf_ward_character'] = row['WARD']
-                    district['vf_cd_number'] = int(row['CD']) if row['CD'] else 0
-                    district['vf_sd_number'] = int(row['SD']) if row['SD'] else 0
-                    district['vf_ad_number'] = int(row['AD']) if row['AD'] else 0
+                    district['vf_cd_number'] = int(
+                        row['CD']) if row['CD'] else 0
+                    district['vf_sd_number'] = int(
+                        row['SD']) if row['SD'] else 0
+                    district['vf_ad_number'] = int(
+                        row['AD']) if row['AD'] else 0
                     district['vf_registration'][row['ENROLLMENT']] += 1
                     for election in row['VoterHistory'].split(';'):
                         district['vf_participation'][election] += 1
@@ -131,8 +176,10 @@ class ElectionDistrict(Document):
 
                 rows_processed += 1
 
-            print("\nCompleted caching voter file.  "
-                  "{} rows processed, {} errors".format(rows_processed, rows_errors))
+            print(
+                "\nCompleted caching voter file.  "
+                "{} rows processed, {} errors".format(
+                    rows_processed, rows_errors))
             print("List of elections: {}".format(elections.keys()))
 
         # Save to DB
@@ -148,35 +195,46 @@ class ElectionDistrict(Document):
                 docs = ElectionDistrict.DATABASE.view(querytype)[key]
                 if not docs:
                     # Create new doc
-                    electiondistrict = ElectionDistrict(doctype='ElectionDistrict',
-                                                        vf_countyname=countyname,
-                                                        vf_ed_number=district['vf_ed_number'],
-                                                        vf_ld_number=district['vf_ld_number'],
-                                                        vf_towncity_character=district['vf_towncity_character'],
-                                                        vf_ward_character=district['vf_ward_character'],
-                                                        vf_cd_number=district['vf_cd_number'],
-                                                        vf_sd_number=district['vf_sd_number'],
-                                                        vf_ad_number=district['vf_ad_number'],
-                                                        vf_ed_code=vf_ed_code,
-                                                        vf_registration=district['vf_registration'],
-                                                        vf_participation=district['vf_participation'])
+                    electiondistrict = ElectionDistrict(
+                        doctype='ElectionDistrict',
+                        vf_countyname=countyname,
+                        vf_ed_number=district['vf_ed_number'],
+                        vf_ld_number=district['vf_ld_number'],
+                        vf_towncity_character=district['vf_towncity_character'],
+                        vf_ward_character=district['vf_ward_character'],
+                        vf_cd_number=district['vf_cd_number'],
+                        vf_sd_number=district['vf_sd_number'],
+                        vf_ad_number=district['vf_ad_number'],
+                        vf_ed_code=vf_ed_code,
+                        vf_registration=district['vf_registration'],
+                        vf_participation=district['vf_participation'])
                     electiondistrict.store(ElectionDistrict.DATABASE)
                 elif overwrite:
                     # One or more ED by this code already exists in DB
                     for doc in docs:
-                        electiondistrict = ElectionDistrict.load(ElectionDistrict.DATABASE, doc.value)
+                        electiondistrict = ElectionDistrict.load(
+                            ElectionDistrict.DATABASE, doc.value)
                         electiondistrict.doctype = 'ElectionDistrict'
                         electiondistrict.vf_countyname = countyname
-                        electiondistrict.vf_ed_number = district['vf_ed_number']
-                        electiondistrict.vf_ld_number = district['vf_ld_number']
-                        electiondistrict.vf_towncity_character = district['vf_towncity_character']
-                        electiondistrict.vf_ward_character = district['vf_ward_character']
-                        electiondistrict.vf_cd_number = district['vf_cd_number']
-                        electiondistrict.vf_sd_number = district['vf_sd_number']
-                        electiondistrict.vf_ad_number = district['vf_ad_number']
+                        electiondistrict.vf_ed_number = district[
+                            'vf_ed_number']
+                        electiondistrict.vf_ld_number = district[
+                            'vf_ld_number']
+                        electiondistrict.vf_towncity_character = district[
+                            'vf_towncity_character']
+                        electiondistrict.vf_ward_character = district[
+                            'vf_ward_character']
+                        electiondistrict.vf_cd_number = district[
+                            'vf_cd_number']
+                        electiondistrict.vf_sd_number = district[
+                            'vf_sd_number']
+                        electiondistrict.vf_ad_number = district[
+                            'vf_ad_number']
                         electiondistrict.vf_ed_code = vf_ed_code
-                        electiondistrict.vf_registration = district['vf_registration']
-                        electiondistrict.vf_participation = district['vf_participation']
+                        electiondistrict.vf_registration = district[
+                            'vf_registration']
+                        electiondistrict.vf_participation = district[
+                            'vf_participation']
                         electiondistrict.store(ElectionDistrict.DATABASE)
 
                 eds_complete += 1
@@ -204,8 +262,10 @@ class ElectionDistrict(Document):
         temp_dict['vf_participation'] = self.vf_participation
         return temp_dict
 
+
 class Unbuffered(object):
     """A wrapper for stdout to unbuffer output on command line."""
+
     def __init__(self, stream):
         self.stream = stream
 

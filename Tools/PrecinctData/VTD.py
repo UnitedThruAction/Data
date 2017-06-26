@@ -20,6 +20,7 @@ from CensusMatrices import P1_RACE_MATRIX, P2_HISPANIC_MATRIX, P3_RACE_18OVER, P
 from ElectionDistrict import ElectionDistrict
 from FIPS import NY_STATE_COUNTIES
 
+
 class VTD(Document):
     """VTD from the 2010 Census, Vote and Enrollment Data."""
 
@@ -64,7 +65,7 @@ class VTD(Document):
         for line in filehandle:
             # State-County-Voting District/Remainder-County Subdivision
             census_SUMLEV = int(line[8:11].rstrip().lstrip())
-            if census_SUMLEV == 710: # VTD
+            if census_SUMLEV == 710:  # VTD
                 # Logical Record Number
                 census_LOGRECNO = int(line[18:25].rstrip().lstrip())
 
@@ -75,7 +76,8 @@ class VTD(Document):
                 census_COUNTY_NAME = NY_STATE_COUNTIES[census_COUNTY]
                 # FIPS County Subdivision
                 census_COUSUB = int(line[36:41].rstrip().lstrip())
-                census_COUSUB_NAME = Cousub.get_cousub_name(census_COUNTY, census_COUSUB)
+                census_COUSUB_NAME = Cousub.get_cousub_name(
+                    census_COUNTY, census_COUSUB)
                 # Metropolitan Statistical Area/Micropolitan Statistical Area
                 census_CBSA = int(line[112:117].rstrip().lstrip())
                 # Metropolitan Division
@@ -99,7 +101,8 @@ class VTD(Document):
                 census_LSADC = line[359:361].rstrip().lstrip()
 
                 try:
-                    vtds = VTD.load_vtds_from_db(QueryType.VTD_BY_CENSUS_LOGRECNO, census_LOGRECNO)
+                    vtds = VTD.load_vtds_from_db(
+                        QueryType.VTD_BY_CENSUS_LOGRECNO, census_LOGRECNO)
                     if overwrite:
                         for vtd in vtds:
                             vtd.doctype = "VTD"
@@ -183,22 +186,17 @@ class VTD(Document):
                                     QueryType.VTD_BY_CENSUS_COUNTY_COUSUB_VTD, [
                                         int(county), int(cousub), int(vtd08)])
                                 if len(vtds) > 1:
-                                    raise ValueError("More than one VTD returned for county {}, cousub {}, vtd {}"\
-                                                     .format(county, cousub, vtd08))
+                                    raise ValueError(
+                                        "More than one VTD returned for county {}, cousub {}, vtd {}" .format(
+                                            county, cousub, vtd08))
                                 for vtd in vtds:
                                     new = None
                                     if file_type == "WARD":
-                                        new = ElectionDistrict.get_ed_code(vtd.census_COUNTY_NAME,
-                                                                           vtd.census_COUSUB_NAME,
-                                                                           int(ward_ad),
-                                                                           None,
-                                                                           int(ed))
+                                        new = ElectionDistrict.get_ed_code(
+                                            vtd.census_COUNTY_NAME, vtd.census_COUSUB_NAME, int(ward_ad), None, int(ed))
                                     elif file_type == "AD":
-                                        new = ElectionDistrict.get_ed_code(vtd.census_COUNTY_NAME,
-                                                                           vtd.census_COUSUB_NAME,
-                                                                           None,
-                                                                           int(ward_ad),
-                                                                           int(ed))
+                                        new = ElectionDistrict.get_ed_code(
+                                            vtd.census_COUNTY_NAME, vtd.census_COUSUB_NAME, None, int(ward_ad), int(ed))
                                     if not vtd.boe_eds:
                                         vtd.boe_eds = [new]
                                     else:
@@ -302,13 +300,19 @@ class VTD(Document):
         temp_dict['boe_eds'] = self.boe_eds
 
         # Only convert handful of most populous race categories.
-        for i in range(9): # ...to "Two or More Races"
-            temp_dict["All ages, " + P1_RACE_MATRIX[i]] = self.census_P1_RACE[i]
-            temp_dict["18 and over, " + P3_RACE_18OVER[i]] = self.census_P3_RACE_18OVER[i]
+        for i in range(9):  # ...to "Two or More Races"
+            temp_dict[
+                "All ages, " +
+                P1_RACE_MATRIX[i]] = self.census_P1_RACE[i]
+            temp_dict["18 and over, " + P3_RACE_18OVER[i]
+                      ] = self.census_P3_RACE_18OVER[i]
 
-        for i in range(11): # ...to "Not Hispanic or Latino; Two or More Races"
-            temp_dict["All ages, " + P2_HISPANIC_MATRIX[i]] = self.census_P2_HISPANIC[i]
-            temp_dict["18 and over, " + P4_HISPANIC_18OVER[i]] = self.census_P4_HISPANIC_18OVER[i]
+        for i in range(
+                11):  # ...to "Not Hispanic or Latino; Two or More Races"
+            temp_dict["All ages, " + P2_HISPANIC_MATRIX[i]
+                      ] = self.census_P2_HISPANIC[i]
+            temp_dict["18 and over, " + P4_HISPANIC_18OVER[i]
+                      ] = self.census_P4_HISPANIC_18OVER[i]
 
         for i in range(3):
             temp_dict[H1_OCCUPANCY[i]] = self.census_H1_OCCUPANCY[i]

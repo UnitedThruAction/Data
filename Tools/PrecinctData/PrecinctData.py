@@ -6,6 +6,7 @@ from VTD import VTD
 from ElectionResult import ElectionResult
 from ElectionDistrict import ElectionDistrict
 
+
 class PrecinctData(object):
 
     def __init__(self):

@@ -7,6 +7,7 @@ from couchdb.mapping import Document, TextField, IntegerField
 
 from Database import Database, QueryType
 
+
 class Cousub(Document):
     """COUnty SUBdivisions from the 2010 Census."""
 
@@ -32,7 +33,7 @@ class Cousub(Document):
         for line in filehandle:
             # State-County-Voting District/Remainder-County Subdivision
             census_SUMLEV = int(line[8:11].rstrip().lstrip())
-            if census_SUMLEV == 60: # COUSUB
+            if census_SUMLEV == 60:  # COUSUB
                 # Logical Record Number
                 census_LOGRECNO = int(line[18:25].rstrip().lstrip())
                 # FIPS State
@@ -46,7 +47,8 @@ class Cousub(Document):
                 census_NAME = line[226:316].rstrip().lstrip()
 
                 try:
-                    cousubs = Cousub.load_cousubs_from_db(QueryType.COUSUB_BY_CENSUS_LOGRECNO, census_LOGRECNO)
+                    cousubs = Cousub.load_cousubs_from_db(
+                        QueryType.COUSUB_BY_CENSUS_LOGRECNO, census_LOGRECNO)
                     if overwrite:
                         for cousub in cousubs:
                             cousub.doctype = "Cousub"
@@ -73,7 +75,9 @@ class Cousub(Document):
 
         if not isinstance(query_type, QueryType):
             raise ValueError("Must provide a QueryType Enum")
-        uuids = [doc.value for doc in Cousub.DATABASE.view(query_type.value)[key]]
+        uuids = [
+            doc.value for doc in Cousub.DATABASE.view(
+                query_type.value)[key]]
         if len(uuids) == 0:
             raise ValueError("No docs returned: {}, key {}"
                              .format(query_type, key))
@@ -81,8 +85,8 @@ class Cousub(Document):
 
     @staticmethod
     def get_cousub_name(county, cousub):
-        cousubs = Cousub.load_cousubs_from_db(QueryType.COUSUB_BY_COUNTY_COUSUB,
-                                              [county, cousub])
+        cousubs = Cousub.load_cousubs_from_db(
+            QueryType.COUSUB_BY_COUNTY_COUSUB, [county, cousub])
         if len(cousubs) > 1:
             raise ValueError("More than one COUSUB returned for county {},"
                              " cousub {}".format(county, cousub))

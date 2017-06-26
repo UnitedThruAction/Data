@@ -11,6 +11,7 @@ from ElectionResult import ElectionResult
 from FIPS import NY_STATE_COUNTIES
 from VTD import VTD
 
+
 class Summary(object):
     """Calculate summaries for a given range of EDs."""
 
@@ -45,27 +46,43 @@ class Summary(object):
             self.ed_list.append(doc)
             self.counties[doc.vf_countyname] = True
 
-        print("Found {} Election Districts in {} counties".format(len(self.ed_list), list(self.counties.keys())))
+        print("Found {} Election Districts in {} counties"
+              .format(len(self.ed_list), list(self.counties.keys())))
 
     def generate(self):
         # Load VTDs, map to EDs and load add results
-        fips_code_lookup = {v:k for k, v in NY_STATE_COUNTIES.items()}
-        county_codes = [fips_code_lookup[county_name] for county_name in self.counties.keys()]
-        querytype = QueryType.VTD_BY_CENSUS_COUNTY # not value
+        fips_code_lookup = {v: k for k, v in NY_STATE_COUNTIES.items()}
+        county_codes = [fips_code_lookup[county_name]
+                        for county_name in self.counties.keys()]
+        querytype = QueryType.VTD_BY_CENSUS_COUNTY  # not value
         vtds = []
         for county_code in county_codes:
             vtds.extend(VTD.load_vtds_from_db(querytype, county_code))
 
         print("Found {} VTDs for review".format(len(vtds)))
-        vtd_stats = {}
-        vtd_election_results = defaultdict(list)
+        er_cache = defaultdict(list)
+        stats_output_cache = {}
+        results_output_cache = {}
         vtds_failed = 0
-        print("Processing")
+        print("Caching Election Results: ", end='')
+        er_doc_view = ElectionResult.DATABASE.view(
+            QueryType.ER_BY_COUNTY_PRECINCT.value)
+        for row in er_doc_view:
+            er_cache[str(row.key)].append(row.value)
+
+        print(
+            "{} taking {:<.2f} kbytes".format(
+                len(er_cache),
+                sys.getsizeof(er_cache) /
+                1024))
+        print("Stepping through VTDs", end='')
         for vtd in vtds:
             in_district = False
-            vtd_summary = Counter()
+            vtd_stats = Counter()
+            vtd_election_results = Counter()
             try:
-                test = "{}{}{}".format(vtd.census_STATE, vtd.census_COUNTY, vtd.census_VTD)
+                test = "{}{}{}".format(
+                    vtd.census_STATE, vtd.census_COUNTY, vtd.census_VTD)
             except AttributeError:
                 vtds_failed += 1
                 continue
@@ -73,38 +90,68 @@ class Summary(object):
             geoid10_key = "{:02.0f}{:03.0f}{:.0f}".format(vtd.census_STATE,
                                                           vtd.census_COUNTY,
                                                           vtd.census_VTD)
-            for vtd_ed in vtd.boe_eds:
-                for ed in self.ed_list:
-                    if (vtd.census_COUNTY_NAME == ed.vf_countyname) and (vtd_ed == ed.vf_ed_code):
-                        in_district = True
-                        vtd_summary += Counter(ed.to_dict())
+            for i, vtd_ed in enumerate(vtd.boe_eds):
+                if i % 10 == 0:
+                    print(".", end='')
 
-                    # Load Election Results
-                    querytype = QueryType.ER_BY_COUNTY_PRECINCT
-                    key = [ed.vf_countyname, ed.vf_ed_code]
-                    ers = ElectionResult.load_ers_from_db(querytype, key)
-                    vtd_election_results[geoid10_key].append(ers)
+                for ed in self.ed_list:
+                    if (vtd.census_COUNTY_NAME == ed.vf_countyname) and (
+                            vtd_ed == ed.vf_ed_code):
+                        in_district = True
+                        vtd_stats += Counter(ed.to_dict())
+
+                    # Sum Election Results for all EDs in this VTD
+                    key = str([ed.vf_countyname, ed.vf_ed_code])
+                    for doc in er_cache[key]:
+                        election =
+                        vtd_election_results += Counter(doc)
 
             if in_district:
-                vtd_summary += Counter(vtd.to_dict())
-                vtd_stats[geoid10_key] = dict(vtd_summary)
+                vtd_stats_summary += Counter(vtd.to_dict())
+                vtd_stats[geoid10_key] = dict(vtd_stats_summary)
+                vtd_election_results[geoid10_key] = dict(
+                    vtd_election_results_summary)
 
-        print("{} VTDs failed with AttributeError".format(vtds_failed))
+        print("Generated stats for {} and result summaries for {} Election "
+              "Districts.".format(len(vtd_stats), len(vtd_election_results)))
+        print("\n{} VTDs failed.".format(vtds_failed))
 
         # Print Results
-        stats = pd.DataFrame(vtd_stats)
+        print("Writing output")
+        stats = pd.DataFrame(vtd_stats).transpose()
         stats.to_csv("~/Downloads/stats.csv")
-        results = pd.DataFrame(vtd_election_results)
+        results = pd.DataFrame(vtd_election_results).transpose()
         results.to_csv("~/Downloads/results.csv")
 
 
+class Unbuffered(object):
+    """A wrapper for stdout to unbuffer output on command line."""
+
+    def __init__(self, stream):
+        self.stream = stream
+
+    def write(self, data):
+        self.stream.write(data)
+        self.stream.flush()
+
+    def __getattr__(self, attr):
+        return getattr(self.stream, attr)
+
 if __name__ == "__main__":
+    sys.stdout = Unbuffered(sys.stdout)
     if len(sys.argv) == 3:
-        s = Summary(district_type=sys.argv[1], district_num=sys.argv[2], countyname=None)
+        s = Summary(
+            district_type=sys.argv[1],
+            district_num=sys.argv[2],
+            countyname=None)
         s.generate()
     elif len(sys.argv) == 2:
-        s = Summary(district_type=None, district_num=None, countyname=sys.argv[1])
+        s = Summary(
+            district_type=None,
+            district_num=None,
+            countyname=sys.argv[1])
         s.generate()
     else:
-        raise ValueError('python Summary.py {STATESENATE|STATEASSEMBLY} {DISTRICT_NUM} or\n'
-                         'python Summary.py {COUNTYNAME}')
+        raise ValueError(
+            'python Summary.py {STATESENATE|STATEASSEMBLY} {DISTRICT_NUM} or\n'
+            'python Summary.py {COUNTYNAME}')
