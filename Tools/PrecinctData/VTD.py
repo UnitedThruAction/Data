@@ -55,7 +55,7 @@ class VTD(Document):
     census_H1_OCCUPANCY = ListField(IntegerField())
 
     @staticmethod
-    def load_vtds_from_file(overwrite=False):
+    def load_vtds_from_file(overwrite=True):
         """Load VTDs into database from NY BoE files.
         See https://www.census.gov/prod/cen2010/doc/pl94-171.pdf, p.2-22
         """

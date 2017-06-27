@@ -2,6 +2,7 @@
 
 import sys
 from collections import Counter, defaultdict
+import pdb
 
 import pandas as pd
 
@@ -66,7 +67,7 @@ class Summary(object):
         vtds_failed = 0
         print("Caching Election Results: ", end='')
         er_doc_view = ElectionResult.DATABASE.view(
-            QueryType.ER_BY_COUNTY_PRECINCT.value)
+            QueryType.ER_DOC_BY_COUNTY_PRECINCT.value)
         for row in er_doc_view:
             er_cache[str(row.key)].append(row.value)
 
@@ -76,7 +77,10 @@ class Summary(object):
                 sys.getsizeof(er_cache) /
                 1024))
         print("Stepping through VTDs", end='')
-        for vtd in vtds:
+        for i, vtd in enumerate(vtds):
+            if i % 10 == 0:
+                print(".", end='')
+
             in_district = False
             vtd_stats = Counter()
             vtd_election_results = Counter()
@@ -90,37 +94,46 @@ class Summary(object):
             geoid10_key = "{:02.0f}{:03.0f}{:.0f}".format(vtd.census_STATE,
                                                           vtd.census_COUNTY,
                                                           vtd.census_VTD)
-            for i, vtd_ed in enumerate(vtd.boe_eds):
-                if i % 10 == 0:
-                    print(".", end='')
-
+            for vtd_ed in vtd.boe_eds:
                 for ed in self.ed_list:
-                    if (vtd.census_COUNTY_NAME == ed.vf_countyname) and (
-                            vtd_ed == ed.vf_ed_code):
+                    if (vtd.census_COUNTY_NAME == ed.vf_countyname)\
+                        and (vtd_ed == ed.vf_ed_code):
+                        print("Matched {},{} and {},{} for VTD {}".format(
+                            vtd.census_county_name,
+                            ed.vf_countyname,
+                            vtd_ed,
+                            ed.vf_ed_code,
+                            vtd.census_LOGRECNO))
                         in_district = True
                         vtd_stats += Counter(ed.to_dict())
 
                     # Sum Election Results for all EDs in this VTD
                     key = str([ed.vf_countyname, ed.vf_ed_code])
                     for doc in er_cache[key]:
-                        election =
-                        vtd_election_results += Counter(doc)
+                        election_key = "{} {} {}: {}".format(
+                            doc['oe_election_date'],
+                            doc['oe_office'],
+                            doc['oe_district'],
+                            doc['oe_candidate'])
+                        line_dict = {election_key: doc['oe_votes']}
+                        vtd_election_results += Counter(line_dict)
 
             if in_district:
-                vtd_stats_summary += Counter(vtd.to_dict())
-                vtd_stats[geoid10_key] = dict(vtd_stats_summary)
-                vtd_election_results[geoid10_key] = dict(
-                    vtd_election_results_summary)
+                vtd_stats += Counter(vtd.to_dict())
+                stats_output_cache[geoid10_key] = dict(vtd_stats)
+                results_output_cache[geoid10_key] = dict(vtd_election_results)
 
-        print("Generated stats for {} and result summaries for {} Election "
-              "Districts.".format(len(vtd_stats), len(vtd_election_results)))
-        print("\n{} VTDs failed.".format(vtds_failed))
+        print("\nGenerated stats for {} and result summaries for {} Election "
+              "Districts.".format(len(stats_output_cache), len(results_output_cache)))
+        print("{} VTDs failed.".format(vtds_failed))
+
+        pdb.set_trace()
 
         # Print Results
         print("Writing output")
-        stats = pd.DataFrame(vtd_stats).transpose()
+        stats = pd.DataFrame(vtd_stats)
         stats.to_csv("~/Downloads/stats.csv")
-        results = pd.DataFrame(vtd_election_results).transpose()
+        results = pd.DataFrame(vtd_election_results)
         results.to_csv("~/Downloads/results.csv")
 
 
