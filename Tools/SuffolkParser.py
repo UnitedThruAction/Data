@@ -6,10 +6,12 @@
 
 import sys
 
+
 def parse_information_record(line):
     """Type I.  Read and parse information record data."""
     information = line[5:].rstrip()
-    return {'information':information}
+    return {'information': information}
+
 
 def parse_office_record(line):
     """Type R.  Read and parse office record data."""
@@ -61,30 +63,31 @@ def parse_office_record(line):
         num_candidates = int(line[62:64])
     except ValueError:
         num_candidates = 0
-    opp_to_ballot_lookup = {'Y':True,
-                            'N':False,
-                            ' ':'Unknown',
-                            'O':'Unknown',
-                            '0':'Unknown',
-                            '2':'Unknown'}
-    district_type_lookup = {'U':'United States',
-                            'N':'New York State',
-                            'K':'Suffolk County',
-                            'A':'Unknown',
-                            'L':'Unknown',
-                            'T':'Unknown',
-                            'W':'Unknown',
-                            'S':'Unknown',
-                            'J':'Unknown',
-                            'C':'Unknown'}
-    return {'office_title':office_title,
-            'office_title_std':office_title_std,
-            'office_district_type':district_type_lookup[office_district_type],
-            'office_district_number':office_district_number,
-            'opp_to_ballot':opp_to_ballot_lookup[opp_to_ballot],
-            'num_election_districts':num_election_districts,
-            'count_eligible_voters':count_eligible_voters,
-            'num_candidates':num_candidates}
+    opp_to_ballot_lookup = {'Y': True,
+                            'N': False,
+                            ' ': 'Unknown',
+                            'O': 'Unknown',
+                            '0': 'Unknown',
+                            '2': 'Unknown'}
+    district_type_lookup = {'U': 'United States',
+                            'N': 'New York State',
+                            'K': 'Suffolk County',
+                            'A': 'Unknown',
+                            'L': 'Unknown',
+                            'T': 'Unknown',
+                            'W': 'Unknown',
+                            'S': 'Unknown',
+                            'J': 'Unknown',
+                            'C': 'Unknown'}
+    return {'office_title': office_title,
+            'office_title_std': office_title_std,
+            'office_district_type': district_type_lookup[office_district_type],
+            'office_district_number': office_district_number,
+            'opp_to_ballot': opp_to_ballot_lookup[opp_to_ballot],
+            'num_election_districts': num_election_districts,
+            'count_eligible_voters': count_eligible_voters,
+            'num_candidates': num_candidates}
+
 
 def parse_candidate_record(line):
     """Type C.  Read and parse candidate record data."""
@@ -96,30 +99,31 @@ def parse_candidate_record(line):
         candidate_name_std = "{} {}".format(names[1], names[0])
     party_code = line[30:33].rstrip()
     write_in_flag = line[33:34]
-    write_in_lookup = {'S':True, ' ':'Unknown'}
+    write_in_lookup = {'S': True, ' ': 'Unknown'}
     total_votes = int(line[34:41])
     row_lever_on_ballot = line[41:44].rstrip()
-    return {'candidate_name':candidate_name,
-            'candidate_name_std':candidate_name_std,
-            'party_code':party_code,
-            'write_in_flag':write_in_lookup[write_in_flag],
-            'total_votes':total_votes,
-            'row_lever_on_ballot':row_lever_on_ballot}
+    return {'candidate_name': candidate_name,
+            'candidate_name_std': candidate_name_std,
+            'party_code': party_code,
+            'write_in_flag': write_in_lookup[write_in_flag],
+            'total_votes': total_votes,
+            'row_lever_on_ballot': row_lever_on_ballot}
+
 
 def parse_ed_record(line):
     """Type E.  Read ED-result record data."""
     record_length = int(line[:4])
     town_code = line[5:6]
-    town_code_lookup = {'0':'Shelter Island',
-                        '1':'Brookhaven',
-                        '2':'Huntington',
-                        '3':'Islip',
-                        '4':'Babylon',
-                        '5':'Smithtown',
-                        '6':'Southampton',
-                        '7':'East Hampton',
-                        '8':'Southold',
-                        '9':'Riverhead'}
+    town_code_lookup = {'0': 'Shelter Island',
+                        '1': 'Brookhaven',
+                        '2': 'Huntington',
+                        '3': 'Islip',
+                        '4': 'Babylon',
+                        '5': 'Smithtown',
+                        '6': 'Southampton',
+                        '7': 'East Hampton',
+                        '8': 'Southold',
+                        '9': 'Riverhead'}
     ed_number = int(line[6:9])
     reported_status = line[9:10].rstrip()
     eligible_voters = int(line[10:14])
@@ -143,7 +147,7 @@ def parse_ed_record(line):
         scattering_votes = 0
 
     # Handle variable-length candidate fields
-    num_candidates = (record_length - 52)/4
+    num_candidates = (record_length - 52) / 4
     if num_candidates % 1 != 0:
         raise ValueError("Incorrect number of characters on line.")
     votes = []
@@ -160,22 +164,23 @@ def parse_ed_record(line):
     precinct_code = "{} #: {:>3}".format(town_code_lookup[town_code].title(),
                                          "{:02.0f}".format(ed_number))
 
-    return {'town_name':town_code_lookup[town_code],
-            'ed_number':ed_number,
-            'reported_status':reported_status,
-            'eligible_voters':eligible_voters,
-            'whole_number':whole_number,
-            'congress_district':congress_district,
-            'senate_district':senate_district,
-            'assembly_district':assembly_district,
-            'legislative_district':legislative_district,
-            'towncouncil_district':towncouncil_district,
-            'blank_votes':blank_votes,
-            'void_votes':void_votes,
-            'scattering_votes':scattering_votes,
-            'num_candidates':num_candidates,
-            'votes':votes,
-            'precinct_code':precinct_code}
+    return {'town_name': town_code_lookup[town_code],
+            'ed_number': ed_number,
+            'reported_status': reported_status,
+            'eligible_voters': eligible_voters,
+            'whole_number': whole_number,
+            'congress_district': congress_district,
+            'senate_district': senate_district,
+            'assembly_district': assembly_district,
+            'legislative_district': legislative_district,
+            'towncouncil_district': towncouncil_district,
+            'blank_votes': blank_votes,
+            'void_votes': void_votes,
+            'scattering_votes': scattering_votes,
+            'num_candidates': num_candidates,
+            'votes': votes,
+            'precinct_code': precinct_code}
+
 
 def process_file(filename):
     """Read the whole file and emit output in standard OE format."""
@@ -224,9 +229,9 @@ def process_file(filename):
                 out_handle.write("\n")
 
             # Append ED void/scattering votes
-            special_types = {'Scattering':'scattering_votes',
-                             'Void':'void_votes',
-                             'Blank':'blank_votes'}
+            special_types = {'Scattering': 'scattering_votes',
+                             'Void': 'void_votes',
+                             'Blank': 'blank_votes'}
             for name in special_types:
                 if election_district[special_types[name]] > 0:
                     output = ['Suffolk',
