@@ -9,4 +9,6 @@ This directory has some useful tools for extracting and cleaning up data from ci
 * `IdeologyLeadership.py` calculates "Ideology" and "Leadership" scores
 for members of the 2006 New York State Senate, based on bill co-sponsorship.
 
+* `KMLWriter.py` converts Geopandas DataFrames of polygons, e.g. election districts, into KML files for visualization in Google Maps.
+
 * `SuffolkParser.py` processes vote data in fixed-length record format received from Suffolk County Board of Elections and translates into the standard OpenElections CSV format.
