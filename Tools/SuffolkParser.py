@@ -185,7 +185,7 @@ def parse_ed_record(line):
 def process_file(filename):
     """Read the whole file and emit output in standard OE format."""
     out_handle = open("{}-output.csv".format(filename), 'w')
-    out_handle.write('county,precinct,office,district,party,candidate,votes\n')
+    out_handle.write('county,precinct,eligible_voters,office,district,party,candidate,votes\n')
     candidates = None
     office = None
     in_handle = open(filename, 'r')
@@ -209,6 +209,8 @@ def process_file(filename):
                 output = ['Suffolk']
                 # Precinct
                 output.append(election_district['precinct_code'])
+                # Eligible voters
+                output.append(str(election_district['eligible_voters']))
                 # Office
                 output.append(office['office_title_std'])
                 # District
@@ -236,6 +238,7 @@ def process_file(filename):
                 if election_district[special_types[name]] > 0:
                     output = ['Suffolk',
                               election_district['precinct_code'],
+                              str(election_district['eligible_voters']),
                               office['office_title_std'],
                               str(office['office_district_number']),
                               '',
