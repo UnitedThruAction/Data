@@ -46,6 +46,12 @@ def parse_office_record(line):
         office_title_std = 'Town Clerk'
     elif 'Supervisor' in office_title:
         office_title_std = 'Supervisor'
+    elif 'Town Justice' in office_title:
+        office_title_std = 'Town Justice'
+    elif 'Assessor' in office_title:
+        office_title_std = 'Town Assessor'
+    elif 'Trustee' in office_title:
+        office_title_std = 'Town Trustee'
     else:
         office_title_std = office_title.rstrip()
 
