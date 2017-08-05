@@ -18,41 +18,9 @@ def parse_office_record(line):
     office_title = line[5:45].rstrip()
 
     # Standardize office title
-    if 'President of The United States' in office_title:
-        office_title_std = 'President'
-    elif 'United States Senator' in office_title:
-        office_title_std = 'U.S. Senate'
-    elif 'Representative in Congress,' in office_title:
-        office_title_std = 'U.S. House'
-    elif 'Member of Senate' in office_title:
-        office_title_std = 'State Assembly'
-    elif 'Member of Assembly' in office_title:
-        office_title_std = 'State Senate'
-    elif 'Justice of the Supreme Court' in office_title:
-        office_title_std = 'Supreme Court'
-    elif 'District Court Judge' in office_title:
-        office_title_std = 'District Court Judge'
-    elif 'County Legislator' in office_title:
-        office_title_std = 'County Legislator'
-    elif 'Receiver of Taxes' in office_title:
-        office_title_std = 'Receiver of Taxes'
-    elif 'Councilman' in office_title:
-        office_title_std = 'Councilman'
-    elif 'Councilmember' in office_title:
-        office_title_std = 'Councilmember'
-    elif 'Superintendent of Highways' in office_title:
-        office_title_std = 'Superintendent of Highways'
-    elif 'Town Clerk' in office_title:
-        office_title_std = 'Town Clerk'
-    elif 'Supervisor' in office_title:
-        office_title_std = 'Supervisor'
-    elif 'Town Justice' in office_title:
-        office_title_std = 'Town Justice'
-    elif 'Assessor' in office_title:
-        office_title_std = 'Town Assessor'
-    elif 'Trustee' in office_title:
-        office_title_std = 'Town Trustee'
-    else:
+    try:
+        office_title_std = office_title.replace(',', '')
+    except Exception:
         office_title_std = office_title.rstrip()
 
     office_district_type = line[45:46].rstrip()
