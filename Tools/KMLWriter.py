@@ -19,7 +19,9 @@ def get_color_scale(color, scale):
     return simplekml.Color.changealphaint(num, color)
 
 def get_color_range(colormap, scale):
-    """Get color from matplotlib colormap.  See https://matplotlib.org/users/colormaps.html."""
+    """Get color from matplotlib colormap, in the range 0..1 inclusive.
+    See https://matplotlib.org/users/colormaps.html.
+    Fixed transparency value of 150/255 chosen for now."""
     cmap = plt.cm.get_cmap(colormap)
     try:
         num = int(cmap.N * scale)
@@ -33,7 +35,16 @@ def get_color_range(colormap, scale):
 def generate(df, column_names, color_detail={},
              schema_types={},
              map_name='Map', filename='~/Downloads/KMLWriter.kml'):
-    """Generate KML from DataFrame."""
+    """Generate KML from DataFrame.  For example:
+        KMLWriter.generate(df,
+           column_names={'shape_name_column':'Name',
+                         'description_column':'Description'},
+           color_detail={'colormap':'Blues',
+                         'color_scale':'Scale'},
+           schema_types={'Percent Democrats':'str'},
+           map_name='Registered Democrats',
+           filename='/Users/nick/Downloads/registered_dems.kml')
+    """
 
     kml = simplekml.Kml(name=map_name)
 
