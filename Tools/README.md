@@ -12,3 +12,5 @@ for members of the 2006 New York State Senate, based on bill co-sponsorship.
 * `KMLWriter.py` converts Geopandas DataFrames of polygons, e.g. election districts, into KML files for visualization in Google Maps.
 
 * `SuffolkParser.py` processes vote data in fixed-length record format received from Suffolk County Board of Elections and translates into the standard OpenElections CSV format.
+
+* `WriteinSheets.py` generate HTML write-in sheets for volunteers to record voter contact.  Can be quickly and easily printed to PDF inside modern browsers.
