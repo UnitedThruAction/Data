@@ -23,7 +23,7 @@ def try_int(number):
 def parse_fuzzy_string(string):
     """Parse fuzzy string."""
     match = re.match(
-        r'(\w+),(\w+),(\d+) ([^,]+) , (Apt ([^, ]+))? ([^,]+) NY ,'
+        r'([^,]+),([^,]+),(\d+) ([^,]+) , (Apt ([^, ]+) )?([^,]+) NY ,'
         r'(\d+),(\d+)\/(\w)\/(\w),(\d+).*', string)
     if match:
         return dict(zip(['FIRSTNAME',
@@ -117,7 +117,10 @@ def fuzzy_match(person, universe):
               "df.apply(FuzzyMatch.build_fuzzy_string, axis=1).", file=stderr)
         remaining['fuzzy_string'] = remaining.apply(build_fuzzy_string, axis=1)
 
-    match, confidence, _ = extractOne(
-        build_fuzzy_string(person), remaining['fuzzy_string'])
-    result = remaining.loc[remaining['fuzzy_string'] == match]
-    return result.to_dict(orient='records')[0], confidence
+    if remaining.shape[0] > 0:
+        match, confidence, _ = extractOne(
+            build_fuzzy_string(person), remaining['fuzzy_string'])
+        result = remaining.loc[remaining['fuzzy_string'] == match]
+        return result.to_dict(orient='records')[0], confidence
+    else:
+        return dict(), 0
