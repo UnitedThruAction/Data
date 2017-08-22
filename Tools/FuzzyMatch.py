@@ -18,6 +18,11 @@ def try_int(number):
     except (ValueError, TypeError):
         return ""
 
+def build_address_string(row):
+    return "{} {} , {} {} NY ".format(row['RADDNUMBER'] if 'RADDNUMBER' in row else "",
+        row['RSTREETNAM'].title() if "RSTREETNAM" in row else "",
+        "Apt {}".format(row['RAPARTMENT']) if 'RAPARTMENT' in row else "",
+        row['TOWNCITY'].title() if 'TOWNCITY' in row else "")
 
 def parse_van_string(string):
     """Parse VAN 'Extra Data' string."""
@@ -116,17 +121,21 @@ def fuzzy_match(person, universe):
     else:
         remaining['firstname_ratio'] = remaining.apply(lambda row: 50, axis=1)
 
-    if 'ADDRESS' in person:
-        remaining['address_ratio'] = remaining.apply(
-            lambda row: fuzz.ratio(person['ADDRESS'], row['ADDRESS']), axis=1)
-    else:
-        remaining['address_ratio'] = remaining.apply(lambda row: 50, axis=1)
+    # Build address strings and try and match
+    person['ADDRESS'] = build_address_string(person)
+    remaining['ADDRESS'] = remaining.apply(build_address_string, axis=1)
+    remaining['address_ratio'] = remaining.apply(
+        lambda row: fuzz.ratio(person['ADDRESS'], row['ADDRESS']), axis=1)
 
     remaining['overall_match'] = 0.8 * remaining['firstname_ratio'] \
         + 0.2 * remaining['address_ratio']
 
-    # Return best match
+    # Threshold and return best match.
+    # Level 20 picked from examination of output.
     match = remaining.sort_values('address_ratio', ascending=False)\
         .iloc[0].to_dict()
 
-    return match, match['overall_match']
+    if match['overall_match'] > 20:
+        return match, match['overall_match']
+    else:
+        return dict(), 0
