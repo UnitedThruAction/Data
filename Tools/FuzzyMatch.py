@@ -7,25 +7,25 @@ name strings, with a bit of added interpersonal intelligence.
 @author n.o.franklin@gmail.com
 """
 import re
-from sys import stderr
 
-from fuzzywuzzy.process import extractOne
+from fuzzywuzzy.process import fuzz
 
 
 def try_int(number):
     """Gracefully try and strip decimal places from integers."""
     try:
         return "{:0.0f}".format(float(number))
-    except ValueError:
+    except (ValueError, TypeError):
         return ""
 
 
-def parse_fuzzy_string(string):
-    """Parse fuzzy string."""
-    match = re.match(
-        r'([^,]+),([^,]+),(\d+) ([^,]+) , (Apt ([^, ]+) )?([^,]+) NY ,'
-        r'(\d+),(\d+)\/(\w)\/(\w),(\d+).*', string)
-    if match:
+def parse_van_string(string):
+    """Parse VAN 'Extra Data' string."""
+    # Format 1: the most common VAN format
+    match1 = re.match(
+        r'([^,]+)?,([^,]+)?,(\d+)? ([^,]+), (Apt ([^, ]+) )?([^,]+)? NY ,'
+        r'(\d+)?,(\d+)?\/(\w)?\/(\w)?,(\d+)?.*', string)
+    if match1:
         return dict(zip(['FIRSTNAME',
                          'LASTNAME',
                          'RADDNUMBER',
@@ -37,26 +37,24 @@ def parse_fuzzy_string(string):
                          'AGE',
                          'GENDER',
                          'ENROLLMENT',
-                         'VANID'], match.groups()))
+                         'VANID'], match1.groups()))
 
-
-def build_fuzzy_string(row):
-    """Build string for fuzzy-matching in VAN "Extra Data" format, e.g.
-    Laurence,Bromberg,185 West End Ave , Apt 18L New York NY ,10023,48/M/D,2726268,null
-    """
-    return ",".join([row['FIRSTNAME'].title() if 'FIRSTNAME' in row else "",
-                     row['LASTNAME'].title() if 'LASTNAME' in row else "",
-                     "{} {} , {} {} NY ".format(row['RADDNUMBER'] if 'RADDNUMBER' in row else "",
-                                                row['RSTREETNAM'].title() if "RSTREETNAM" in row else "",
-                                                "Apt {}".format(row['RAPARTMENT']) if 'RAPARTMENT' in row else "",
-                                                row['TOWNCITY'].title() if 'TOWNCITY' in row else ""),
-                     try_int(row['RZIP5'] if 'RZIP5' in row else ""),
-                     "{}/{}/{}".format(try_int(row['AGE']) if 'AGE' in row else "",
-                                       row['GENDER'] if 'GENDER' in row else "",
-                                       row['ENROLLMENT'][0] if 'ENROLLMENT' in row else ""),
-                     "0000000",
-                     "null"])
-
+    # Format 2: alternate VAN format
+    match2 = re.match(
+        r'([^,]+)?,([^,]+)?,(\d+)? ([^,]+), (Apt ([^, ]+) )?([^,]+)? NY ,'
+        r'(\d+)?,(\d+)?,(\w)?,(\d+)?.*', string)
+    if match2:
+        return dict(zip(['FIRSTNAME',
+                         'LASTNAME',
+                         'RADDNUMBER',
+                         'RSTREETNAM',
+                         'UNUSED1',
+                         'RAPARTMENT',
+                         'TOWNCITY',
+                         'RZIP5',
+                         'AGE',
+                         'GENDER',
+                         'VANID'], match2.groups()))
 
 def fuzzy_match(person, universe):
     """Find the best person match in the universe.
@@ -64,14 +62,11 @@ def fuzzy_match(person, universe):
     person (dict)                   features we know
     universe (pandas.DataFrame)     all people in the voter universe
 
-    If you're running this repeatedly on the same universe, avoid recalculation
-    using df['fuzzy_string'] = df.apply(FuzzyMatch.build_fuzzy_string, axis=1).
-
     NB We don't do much type-checking here, to allow Python/Pandas to duck-type
     if required.  But this might lead to surprising results, e.g.
     int("19350101") != datetime(1935, 1, 1).
 
-    Returns completed dict."""
+    Returns completed dict and confidence."""
 
     # Precise lookup by unique ID.  Avoid the copy operation.  Only return
     # if only one row exists; otherwise continue to rest of logic.
@@ -87,40 +82,51 @@ def fuzzy_match(person, universe):
         if len(results) == 1:
             return results[0], 100
 
-    # Else, narrow universe using fields which must match exactly:
+    # Narrow universe using fields which must match exactly:
     # DOB, GENDER, LASTNAME and AGE
-    remaining = universe.copy(deep=True)
+    remaining = universe.copy()
 
-    if 'DOB' in person:
+    if 'DOB' in person and person['DOB'] is not None:
         remaining = remaining.loc[remaining['DOB'] == person['DOB']]
-        #print("Matched DOB: {} remaining".format(remaining.shape[0]), file=stderr)
 
-    if 'GENDER' in person:
+    if 'GENDER' in person and person['GENDER'] is not None:
         remaining = remaining.loc[
             remaining['GENDER'] == person['GENDER'].upper()]
-        #print("Matched GENDER: {} remaining".format(remaining.shape[0]), file=stderr)
 
-    if 'LASTNAME' in person:
+    if 'LASTNAME' in person and person['LASTNAME'] is not None:
         remaining = remaining.loc[
             remaining['LASTNAME'] == person['LASTNAME'].upper()]
-        #print("Matched LASTNAME: {} remaining".format(remaining.shape[0]), file=stderr)
 
-    if 'AGE' in person:
+    if 'AGE' in person and person['AGE'] is not None:
         remaining = remaining.loc[remaining['AGE'] == person['AGE']]
-        #print("Matched AGE: {} remaining".format(remaining.shape[0]), file=stderr)
 
-    # Find best match from remaining data, handling abbreviations of firstname,
-    # change of address, missing data, etc.
-    # Use the column if it already exists, don't rebuild.
-    if 'fuzzy_string' not in remaining.columns:
-        print("Avoid recalculation using df['fuzzy_string'] = "
-              "df.apply(FuzzyMatch.build_fuzzy_string, axis=1).", file=stderr)
-        remaining['fuzzy_string'] = remaining.apply(build_fuzzy_string, axis=1)
-
-    if remaining.shape[0] > 0:
-        match, confidence, _ = extractOne(
-            build_fuzzy_string(person), remaining['fuzzy_string'])
-        result = remaining.loc[remaining['fuzzy_string'] == match]
-        return result.to_dict(orient='records')[0], confidence
-    else:
+    if remaining.shape[0] == 0:
+        # Nobody in the universe matches the mandatory fields
         return dict(), 0
+
+    # Else, fuzzy match on remaining fields:
+    # same firstname different address, likely person moved;
+    # different firstname same address, possible abbreviation, but less likely
+    # both different: very unlikely to be same person
+    # i.e. FIRSTNAME (80% weighting), ADDRESS (20% weighting)
+
+    if 'FIRSTNAME' in person:
+        remaining['firstname_ratio'] = remaining.apply(
+            lambda row: fuzz.ratio(person['FIRSTNAME'], row['FIRSTNAME']), axis=1)
+    else:
+        remaining['firstname_ratio'] = remaining.apply(lambda row: 50, axis=1)
+
+    if 'ADDRESS' in person:
+        remaining['address_ratio'] = remaining.apply(
+            lambda row: fuzz.ratio(person['ADDRESS'], row['ADDRESS']), axis=1)
+    else:
+        remaining['address_ratio'] = remaining.apply(lambda row: 50, axis=1)
+
+    remaining['overall_match'] = 0.8 * remaining['firstname_ratio'] \
+        + 0.2 * remaining['address_ratio']
+
+    # Return best match
+    match = remaining.sort_values('address_ratio', ascending=False)\
+        .iloc[0].to_dict()
+
+    return match, match['overall_match']
