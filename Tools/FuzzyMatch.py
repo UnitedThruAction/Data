@@ -66,17 +66,18 @@ def parse_van_string(string):
                          'VANID'], match2.groups()))
 
 
-def fuzzy_match(person, universe):
-    """Find the best person match in the universe.
+def fuzzy_match(person, universe, tolerance):
+    """Find the best person match in the universe, up to a specified tolerance.
 
     person (dict)                   features we know
     universe (pandas.DataFrame)     all people in the voter universe
+    tolerance (int)                 minimum match ratio (/100).
 
     NB We don't do much type-checking here, to allow Python/Pandas to duck-type
     if required.  But this might lead to surprising results, e.g.
     int("19350101") != datetime(1935, 1, 1).
 
-    Returns completed dict and confidence."""
+    Returns list of completed dict and confidence."""
 
     # Precise lookup by unique ID.  Avoid the copy operation.  Only return
     # if only one row exists; otherwise continue to rest of logic.
@@ -84,13 +85,13 @@ def fuzzy_match(person, universe):
         results = universe.loc[universe['SBOEID'] == person['SBOEID']]\
             .to_dict(orient='records')
         if len(results) == 1:
-            return results[0], 100
+            return [results[0], 100]
 
     if 'COUNTYVRNU' in person:
         results = universe.loc[universe['COUNTYVRNU'] == person['COUNTYVRNU']]\
             .to_dict(orient='records')
         if len(results) == 1:
-            return results[0], 100
+            return [results[0], 100]
 
     # Narrow universe using fields which must match exactly:
     # DOB, GENDER, LASTNAME and AGE
@@ -112,35 +113,35 @@ def fuzzy_match(person, universe):
 
     if remaining.shape[0] == 0:
         # Nobody in the universe matches the mandatory fields
-        return dict(), 0
+        return [dict(), 0]
 
     # Else, fuzzy match on remaining fields:
     # same firstname different address, likely person moved;
     # different firstname same address, possible abbreviation, but less likely
     # both different: very unlikely to be same person
     # i.e. FIRSTNAME (80% weighting), ADDRESS (20% weighting)
-
     if 'FIRSTNAME' in person:
         remaining['firstname_ratio'] = remaining.apply(
             lambda row: fuzz.ratio(person['FIRSTNAME'], row['FIRSTNAME']), axis=1)
-    else:
-        remaining['firstname_ratio'] = remaining.apply(lambda row: 50, axis=1)
 
-    # Build address strings and try and match
-    person['ADDRESS'] = build_address_string(person)
-    remaining['ADDRESS'] = remaining.apply(build_address_string, axis=1)
-    remaining['address_ratio'] = remaining.apply(
-        lambda row: fuzz.ratio(person['ADDRESS'], row['ADDRESS']), axis=1)
+    if ('RADDNUMBER' in person) and ('RSTREETNAM' in person)\
+        and ('RAPARTMENT' in person) and ('TOWNCITY' in person):
+        person['ADDRESS'] = build_address_string(person)
+        remaining['ADDRESS'] = remaining.apply(build_address_string, axis=1)
+        remaining['address_ratio'] = remaining.apply(
+            lambda row: fuzz.ratio(person['ADDRESS'], row['ADDRESS']), axis=1)
 
-    remaining['overall_match'] = 0.8 * remaining['firstname_ratio'] \
-        + 0.2 * remaining['address_ratio']
+    if ('firstname_ratio' in remaining) and ('address_ratio' in remaining):
+        remaining['overall_match'] = 0.8 * remaining['firstname_ratio'] \
+            + 0.2 * remaining['address_ratio']
+    elif 'firstname_ratio' in remaining:
+        remaining['overall_match'] = remaining['firstname_ratio']
 
     # Threshold and return best match.
-    # Level 20 picked from examination of output.
-    match = remaining.sort_values('address_ratio', ascending=False)\
+    match = remaining.sort_values('overall_match', ascending=False)\
         .iloc[0].to_dict()
 
-    if match['overall_match'] > 20:
-        return match, match['overall_match']
+    if match['overall_match'] > tolerance:
+        return [match, match['overall_match']]
     else:
-        return dict(), 0
+        return [dict(), 0]
