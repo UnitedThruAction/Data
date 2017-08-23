@@ -18,11 +18,15 @@ def try_int(number):
     except (ValueError, TypeError):
         return ""
 
+
 def build_address_string(row):
-    return "{} {} , {} {} NY ".format(row['RADDNUMBER'] if 'RADDNUMBER' in row else "",
+    return "{} {} , {} {} NY ".format(
+        row['RADDNUMBER'] if 'RADDNUMBER' in row else "",
         row['RSTREETNAM'].title() if "RSTREETNAM" in row else "",
-        "Apt {}".format(row['RAPARTMENT']) if 'RAPARTMENT' in row else "",
+        "Apt {}".format(
+            row['RAPARTMENT']) if 'RAPARTMENT' in row else "",
         row['TOWNCITY'].title() if 'TOWNCITY' in row else "")
+
 
 def parse_van_string(string):
     """Parse VAN 'Extra Data' string."""
@@ -60,6 +64,7 @@ def parse_van_string(string):
                          'AGE',
                          'GENDER',
                          'VANID'], match2.groups()))
+
 
 def fuzzy_match(person, universe):
     """Find the best person match in the universe.
