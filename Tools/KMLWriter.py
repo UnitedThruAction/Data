@@ -55,14 +55,14 @@ def generate(df, column_names, color_detail={},
 
     for row in df.iterrows():
         if 'shape_name_column' in column_names:
-            name = row[1][
-                column_names['shape_name_column']].encode(
+            name = str(row[1][
+                column_names['shape_name_column']]).encode(
                 'ascii', 'ignore')
         else:
             name = None
         if 'description_column' in column_names:
-            description = row[1][
-                column_names['description_column']].encode(
+            description = str(row[1][
+                column_names['description_column']]).encode(
                 'ascii', 'ignore')
         else:
             description = None
