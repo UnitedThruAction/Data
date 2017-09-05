@@ -16,3 +16,6 @@ for members of the 2006 New York State Senate, based on bill co-sponsorship.
 * `WriteinSheets.py` generate HTML write-in sheets for volunteers to record voter contact.  Can be quickly and easily printed to PDF inside modern browsers.
 
 * `FuzzyMatch.py` performs a fuzzy match of a dict() of personal attributes against the Voter File.
+
+* `CachingGeocoder.py` is a really simple implementation of a caching geocoder using the
+Google Maps Geocoding API, which takes in a Pandas DataFrame of addresses and converts it into a Geopandas GeoDataFrame with points in CRS 84 for each address.
