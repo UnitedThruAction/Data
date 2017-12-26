@@ -98,8 +98,9 @@ def vf_standardize_address(row, results, usps_key):
         address = address.upper()
         addr = {'address': address, 'city': row['RCITY'], 'state': 'NY'}
         result = address_information.verify(usps_key, addr)
-        results[row['SBOEID']] = "{}, {} {} {}-{}".format(
-            result['address'], result['city'], result['state'], result['zip5'], result['zip4'])
+        zip4 = "-{}".format(result['zip4']) if result['zip4'] else ''
+        results[row['SBOEID']] = "{}, {} {} {}{}".format(
+            result['address'], result['city'], result['state'], result['zip5'], zip4)
     except Exception:
         results[row['SBOEID']] = address
 
@@ -108,11 +109,12 @@ def gen_standardize_address(addr1, addr2, key, results, usps_key):
     addr = {'address': addr1, 'city': addr2, 'state': 'NY'}
     try:
         result = address_information.verify(usps_key, addr)
-        results[key] = "{}, {} {} {}-{}".format(
+        zzip4 = "-{}".format(result['zip4']) if result['zip4'] else ''
+        results[key] = "{}, {} {} {}{}".format(
             result['address'],
             result['city'],
             result['state'],
             result['zip5'],
-            result['zip4'])
+            zip4)
     except Exception:
         results[key] = "{}, {}".format(addr1, addr2)
