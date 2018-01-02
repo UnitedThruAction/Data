@@ -18,7 +18,7 @@ def generic_table_parser(source, addl_data):
     if source[:4] == 'http':
         response = get(source)
         response.raise_for_status()
-        fh = response.text.splitlines()
+        fh = response.text
     else:
         fh = open(source, 'r')
 

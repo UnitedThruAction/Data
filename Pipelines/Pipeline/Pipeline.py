@@ -11,13 +11,15 @@ from __future__ import absolute_import
 
 import argparse
 import logging
+import threading
 
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 from pyusps import address_information
+from collections import deque
 
-def vf_standardize_address(row, usps_key):
+def vf_standardize_address(row, usps_key, output_arr):
     """Used for the NY State Voter File only."""
     rhalfcode = '' if not row['RHALFCODE'] else row['RHALFCODE']
     raddnumber = '' if not row['RADDNUMBER'] else row['RADDNUMBER']
@@ -54,15 +56,45 @@ def vf_standardize_address(row, usps_key):
     except Exception as e:
         output, err = None, str(e)
 
-    return {'SBOEID': row['SBOEID'],
+    output_arr.append({'SBOEID': row['SBOEID'],
             'FMT_ADDR': output,
-            'ERR': err}
+            'ERR': err})
+    return
 
 class StandardizeAddress(beam.DoFn):
+    NUM_THREADS = 50
+
+    def start_bundle(self):
+        self.threads = deque()
+        self.output = deque()
+
+    def push_queue(self, element, usps_key):
+        t = threading.Thread(
+            target=vf_standardize_address, args=(
+                element, usps_key, self.output))
+        t.start()
+        self.threads.append(t)
+
+    def pop_queue(self):
+        for t in self.threads:
+            if ~t.is_alive():
+                t.join()
+
+        while self.output:
+            yield self.output.popleft()
 
     def process(self, element, usps_key):
-        yield vf_standardize_address(element, usps_key)
+        if len(self.threads) < self.NUM_THREADS:
+            self.push_queue(element, usps_key)
+        else:
+            self.pop_queue()
+            self.push_queue(element, usps_key)
 
+    def finish_bundle(self):
+        for t in self.threads:
+            t.join()
+        for o in self.output:
+            yield o
 
 def run(argv=None):
   """Main entry point; defines and runs the pipeline."""
@@ -96,7 +128,7 @@ def run(argv=None):
     )
 
     output | beam.io.Write(
-        beam.io.BigQuerySink(table='NY_State_Voter_List_2017_09_06.addresses',
+        beam.io.BigQuerySink(table='NY_State_Voter_List_2017_09_06.addresses_2',
             validate=True,
             schema='SBOEID:STRING,FMT_ADDR:STRING,ERR:STRING'))
 
