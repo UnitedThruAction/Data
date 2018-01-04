@@ -1,3 +1,12 @@
+"""This is the source of Address Lookup requests.
+
+* Selects the first 100 rows from a BigQuery table
+* Creates an object containing the USPS_KEY from an environment variable
+* Serializes to JSON
+* Publishes on Cloud Pub/Sub
+
+"""
+
 from google.cloud import pubsub, bigquery
 import time
 import os

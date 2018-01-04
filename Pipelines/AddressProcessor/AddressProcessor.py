@@ -1,10 +1,46 @@
-"""A Python app to service US address distributed formatting requests."""
+"""A Python app to service US address distributed formatting requests.
+
+This:
+* Subscribes on a Cloud Pub/Sub topic called "address_requests"
+* Deserializes the JSON message into a Python object
+* Uses data in the object to make a call to the USPS Address Lookup API
+* Saves results to a BigQuery table called "test_dest"
+
+This uses Google App Default Credentials.  To run on GKE, see:
+https://cloud.google.com/kubernetes-engine/docs/tutorials/authenticating-to-cloud-platform
+
+"""
 
 from pyusps import address_information
-from google.cloud import pubsub
+from google.cloud import pubsub, bigquery
 import time
 import json
 import logging
+
+# PEP 318
+def singleton(cls):
+    instances = {}
+    def getinstance():
+        if cls not in instances:
+            instances[cls] = cls()
+        return instances[cls]
+    return getinstance()
+
+@singleton
+class BQHelper(object):
+
+    def __init__(self):
+        self.client = bigquery.Client()
+        self.dset = self.client.get_dataset(bigquery.DatasetReference('voterdb-test', 'NY_State_Voter_List_2017_09_06'))
+        self.tab =  self.client.get_table(bigquery.TableReference(self.dset, "test_dest"))
+
+    def store(self, address, city, output):
+        ROWS = [
+            (address, city, output)
+        ]
+        errors = self.client.create_rows(self.tab, ROWS)
+        if errors is not []:
+            raise Exception("Error saving to BigQuery: {}".format(str(errors)))
 
 
 def gen_standardize_address(address, city, usps_key):
@@ -17,10 +53,11 @@ def gen_standardize_address(address, city, usps_key):
 def callback(message):
     try:
         msg = message.data.decode("utf-8")
-        logging.info("Got message: {}".format(msg))
+        logging.debug("Got message: {}".format(msg))
         obj = json.loads(msg)
         output = gen_standardize_address(obj['address'], obj['city'], obj['usps_key'])
-        logging.info("Got output: {}".format(output))
+        logging.debug("Got output: {}".format(output))
+        BQHelper.store(obj['address'], obj['city'], output)
         message.ack()
     except Exception as err:
         logging.error("Caught error: {}".format(str(err)))
