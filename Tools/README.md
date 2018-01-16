@@ -19,3 +19,6 @@ for members of the 2006 New York State Senate, based on bill co-sponsorship.
 
 * `CachingGeocoder.py` is a really simple implementation of a caching geocoder using the
 Google Maps Geocoding API, which takes in a Pandas DataFrame of addresses and converts it into a Geopandas GeoDataFrame with points in CRS 84 for each address.
+
+* `UploadZipBigquery.py` downloads a file from the web, unzips it in memory, parses the data,
+and uploads to Google BigQuery.  This a simple proof of concept to copy later.
