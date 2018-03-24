@@ -8,6 +8,7 @@ import simplekml
 import shapely
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+from xml.sax.saxutils import escape
 
 
 def get_color_scale(color, scale):
@@ -57,7 +58,7 @@ def generate(df, column_names, color_detail={},
     if schema_types:
         schema = kml.newschema()
         for name, typ in schema_types.items():
-            schema.newsimplefield(name=name, type=typ)
+            schema.newsimplefield(name=escape(name), type=typ)
 
     for row in df.iterrows():
         if 'shape_name_column' in column_names:
@@ -105,8 +106,12 @@ def generate(df, column_names, color_detail={},
         if schema_types:
             obj.extendeddata.schemadata.schemaurl = schema.id
             for name in schema_types:
+                if schema_types[name] == 'str':
+                    data = escape(row[1][name])
+                else:
+                    data = row[1][name]
                 obj.extendeddata.schemadata.newsimpledata(
-                    name, row[1][name])
+                    escape(name), data)
 
     kml.save(path=filename)
     print('Saved {}'.format(filename))
