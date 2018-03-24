@@ -1,3 +1,0 @@
-pyusps
-google-cloud-bigquery
-google-cloud-pubsub
