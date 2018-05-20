@@ -26,10 +26,16 @@ SPECIAL_TYPES = ['Absentee / Military',
                  'Yes',
                  'No']
 
+URLS = [
+    'http://vote.nyc.ny.us/html/results/results.shtml', # 2018
+    'http://vote.nyc.ny.us/html/results/2017.shtml',
+    'http://vote.nyc.ny.us/html/results/2016.shtml',
+    'http://vote.nyc.ny.us/html/results/2015.shtml',
+    'http://vote.nyc.ny.us/html/results/2014.shtml'
+]
 
-def download_parse():
-    logging.info("Downloading current Election Results index page.")
-    url = "http://vote.nyc.ny.us/html/results/results.shtml"
+def download_parse(url):
+    logging.info("Downloading {}".format(url))
     response = get(url)
     logging.info(
         "Got {:0,.0f} kb, parsing.".format(
@@ -45,10 +51,10 @@ def download_parse():
         href = link['href']
         if '.csv' in href:
             if href[0] == '/':
-                urls.append("http://vote.nyc.ny.us{}".format(href))
+                urls.append(u"http://vote.nyc.ny.us{}".format(href))
             else:
                 urls.append(
-                    "http://vote.nyc.ny.us/html/results/{}".format(href))
+                    u"http://vote.nyc.ny.us/html/results/{}".format(href))
 
     # Download each CSV and append results to list
     logging.info("Downloading and parsing individual CSVs.")
@@ -56,7 +62,7 @@ def download_parse():
     for url in tqdm(urls):
         response = get(url)
         response.raise_for_status()
-        lines = response.text.splitlines()
+        lines = response.text.encode('utf-8').splitlines()
         reader = csv.DictReader(lines)
         for row in reader:
             if 'Recap' in url:
@@ -132,26 +138,27 @@ def get_transformed_df(df, filename):
 
 
 def run():
-    df = download_parse()
-    logging.info("Converting dates.")
-    df['date'] = df.apply(get_date, axis=1)
-    logging.info("Converting election types.")
-    df['election_type'] = df.apply(get_election_type, axis=1)
-    logging.info("Generating filenames.")
-    df['filename'] = df.apply(lambda row: "{}__ny__{}__{}__precinct.csv".format(
-        row['date'], row['election_type'], row['County'].lower()), axis=1)
-    logging.info("Converting precinct codes.")
-    df['precinct'] = df.apply(lambda row: "{:03.0f}/{:02.0f}".format(
-        int(row['ED']), int(row['AD'])), axis=1)
-    logging.info("Converting candidate names.")
-    df['candidate'] = df.apply(lambda row: get_candidate(row), axis=1)
-    logging.info("Converting party names.")
-    df['party'] = df.apply(lambda row: get_party(row), axis=1)
-    files = df.loc[:, 'filename'].drop_duplicates()
-    logging.info("Writing files.")
-    for filename in tqdm(files):
-        output = get_transformed_df(df, filename)
-        output.to_csv(filename, index=False)
+    for url in URLS:
+        df = download_parse(url)
+        logging.info("Converting dates.")
+        df['date'] = df.apply(get_date, axis=1)
+        logging.info("Converting election types.")
+        df['election_type'] = df.apply(get_election_type, axis=1)
+        logging.info("Generating filenames.")
+        df['filename'] = df.apply(lambda row: "{}__ny__{}__{}__precinct.csv".format(
+            row['date'], row['election_type'], row['County'].lower()), axis=1)
+        logging.info("Converting precinct codes.")
+        df['precinct'] = df.apply(lambda row: "{:03.0f}/{:02.0f}".format(
+            int(row['ED']), int(row['AD'])), axis=1)
+        logging.info("Converting candidate names.")
+        df['candidate'] = df.apply(lambda row: get_candidate(row), axis=1)
+        logging.info("Converting party names.")
+        df['party'] = df.apply(lambda row: get_party(row), axis=1)
+        files = df.loc[:, 'filename'].drop_duplicates()
+        logging.info("Writing files.")
+        for filename in tqdm(files):
+            output = get_transformed_df(df, filename)
+            output.to_csv(filename, index=False, encoding='utf-8')
 
 
 if __name__ == "__main__":

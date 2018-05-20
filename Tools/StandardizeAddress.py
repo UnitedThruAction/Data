@@ -57,6 +57,11 @@ def standardize_address(
             t = threads.popleft()
             t.join()
             continue
+
+    while threads:
+        t = threads.popleft()
+        t.join()
+
     sys.stderr.flush()
     sys.stdout.flush()
     if type == 'vf':
@@ -109,12 +114,12 @@ def gen_standardize_address(addr1, addr2, key, results, usps_key):
     addr = {'address': addr1, 'city': addr2, 'state': 'NY'}
     try:
         result = address_information.verify(usps_key, addr)
-        zzip4 = "-{}".format(result['zip4']) if result['zip4'] else ''
+        zip4 = "-{}".format(result['zip4']) if ('zip4' in result) and result['zip4'] else ''
         results[key] = "{}, {} {} {}{}".format(
             result['address'],
             result['city'],
             result['state'],
             result['zip5'],
             zip4)
-    except Exception:
+    except Exception as e:
         results[key] = "{}, {}".format(addr1, addr2)
