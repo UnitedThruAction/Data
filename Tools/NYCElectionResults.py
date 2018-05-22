@@ -19,10 +19,13 @@ from requests import get
 from tqdm import tqdm
 
 SPECIAL_TYPES = ['Absentee / Military',
+                 'Absentee/Military',
                  'Public Counter',
                  'Scattered',
                  'Manually Counted Emergency',
+                 'Emergency',
                  'Affidavit',
+                 'Federal',
                  'Yes',
                  'No']
 
@@ -65,8 +68,8 @@ def download_parse(url):
         lines = response.text.encode('utf-8').splitlines()
         reader = csv.DictReader(lines)
         for row in reader:
-            if 'Recap' in url:
-                recap_output.append(row)
+            #if 'Recap' in url:
+            #    recap_output.append(row)
             if 'EDLevel' in url:
                 ed_output.append(row)
     logging.info("Got {} precinct-level results.".format(len(ed_output)))
@@ -98,11 +101,10 @@ def get_election_type(row):
 
 
 def get_candidate(row):
-    if (row['election_type'] == 'primary') or (
-            row['UnitName'] in SPECIAL_TYPES):
+    if (row['election_type'] == 'primary') or (row['UnitName'] in SPECIAL_TYPES):
         return row['UnitName']
     else:
-        m = re.match(r"(.*)? \((.*)\)", row['UnitName'])
+        m = re.match(r"(.*)?\W\((.*)\)", row['UnitName'])
         if m:
             return m.group(1)
         else:
@@ -115,7 +117,7 @@ def get_party(row):
     if row['UnitName'] in SPECIAL_TYPES:
         return None
     else:
-        m = re.match(r"(.*)? \((.*)\)", row['UnitName'])
+        m = re.match(r"(.*)?\W\((.*)\)", row['UnitName'])
         if m:
             return m.group(2)
         else:
@@ -130,7 +132,7 @@ def get_transformed_df(df, filename):
                      'DistrictKey',
                      'candidate',
                      'party',
-                     'Tally']] .rename(columns={'County': 'county',
+                     'Tally']].rename(columns={'County': 'county',
                                                 'OfficePositionTitle': 'office',
                                                 'DistrictKey': 'district',
                                                 'Tally': 'votes'})
