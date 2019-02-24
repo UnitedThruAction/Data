@@ -23,6 +23,7 @@ SPECIAL_TYPES = ['Absentee / Military',
                  'Public Counter',
                  'Scattered',
                  'Manually Counted Emergency',
+                 'Special Presidential',
                  'Emergency',
                  'Affidavit',
                  'Federal',
@@ -93,9 +94,12 @@ def get_date(row):
 
 
 def get_election_type(row):
-    m = re.match(r'(.*) Election - (\d{2})/(\d{2})/(\d{4})', row['Event'])
+    m = re.match(r'(.*) Election.*(\d{2})/(\d{2})/(\d{4})', row['Event'])
     if m:
         return m.group(1).lower()
+    m = re.match(r'(.*) - .*', row['Event'])
+    if m:
+        return m.group(1).lower().replace(' ', '_')
     else:
         return "special"
 
@@ -104,20 +108,25 @@ def get_candidate(row):
     if (row['election_type'] == 'primary') or (row['UnitName'] in SPECIAL_TYPES):
         return row['UnitName']
     else:
-        m = re.match(r"(.*)?\W\((.*)\)", row['UnitName'])
+        m = re.match(r"(.*)\W+\((.*)\)", row['UnitName'].strip())
         if m:
             return m.group(1)
         else:
-            return None
+            return row['UnitName'].strip()
 
 
 def get_party(row):
     if row['election_type'] == 'primary':
-        return row['PartyIndependentBody']
+        if 'PartyIndependentBody' in row:
+            return row['PartyIndependentBody']
+        if 'Party/Independent Body' in row:
+            return row['Party/Independent Body']
+        else:
+            return None
     if row['UnitName'] in SPECIAL_TYPES:
         return None
     else:
-        m = re.match(r"(.*)?\W\((.*)\)", row['UnitName'])
+        m = re.match(r"(.*)\W+\((.*)\)", row['UnitName'])
         if m:
             return m.group(2)
         else:
@@ -148,7 +157,7 @@ def run():
         df['election_type'] = df.apply(get_election_type, axis=1)
         logging.info("Generating filenames.")
         df['filename'] = df.apply(lambda row: "{}__ny__{}__{}__precinct.csv".format(
-            row['date'], row['election_type'], row['County'].lower()), axis=1)
+            row['date'], row['election_type'], row['County'].lower().replace(' ', '_')), axis=1)
         logging.info("Converting precinct codes.")
         df['precinct'] = df.apply(lambda row: "{:03.0f}/{:02.0f}".format(
             int(row['ED']), int(row['AD'])), axis=1)

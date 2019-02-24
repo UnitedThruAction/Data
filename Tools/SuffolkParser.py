@@ -47,6 +47,7 @@ def parse_office_record(line):
                             'W': 'Unknown',
                             'S': 'Unknown',
                             'J': 'Unknown',
+                            'X': 'Unknown',
                             'C': 'Unknown'}
     return {'office_title': office_title,
             'office_title_std': office_title_std,
